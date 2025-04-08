@@ -1,0 +1,8 @@
+[workspace]
+members = ["boring-vault-svm-core", "boring-vault-svm-py"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Boring Vault SVM implementation"
