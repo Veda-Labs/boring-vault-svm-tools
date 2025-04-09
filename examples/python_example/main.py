@@ -50,7 +50,35 @@ async def main():
             strategist=None  # Optional
         )
 
-        print("Sending instrucitons as one bundle...")
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
+
+        print("Setting up SOL as a deposit asset...")
+        builder.update_asset_data(
+                signer_bytes=signer_bytes,
+                vault_id=0,
+                mint="11111111111111111111111111111111",
+                allow_deposits=True,  # allow_deposits
+                allow_withdrawals=True,  # allow_withdrawals
+                share_premium_bps=0,     # share_premium_bps
+                is_pegged_to_base_asset=True, # is_pegged_to_base_asset
+                price_feed="11111111111111111111111111111111",
+                inverse_price_feed=False, # inverse_price_feed
+                max_staleness=0,    # max_staleness
+                min_samples=0,     # min_samples
+        )
+
+        print("Depositing SOL...")
+        builder.deposit_sol(
+            signer_bytes=signer_bytes,
+            vault_id=0,
+            user_pubkey="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
+            deposit_amount=1000000000, # deposit_amount in lamports
+            min_mint_amount=0,          # min_mint_amount
+        )
+
+        print("Sending instructions as one bundle...")
         tx_hash = builder.try_bundle_all(signer_bytes)
 
         print(f"Success! Transaction hash: {tx_hash}")

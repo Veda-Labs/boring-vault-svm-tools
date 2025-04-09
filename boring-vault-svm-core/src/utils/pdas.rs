@@ -45,3 +45,15 @@ pub fn get_vault_pda(vault_id: u64, sub_account: u8) -> Pubkey {
     );
     vault_pda
 }
+
+pub fn get_asset_data_pda(vault_state_pda: Pubkey, mint: Pubkey) -> Pubkey {
+    let (asset_data_pda, _) = Pubkey::find_program_address(
+        &[
+            BASE_SEED_ASSET_DATA,
+            vault_state_pda.as_ref(),
+            mint.as_ref(),
+        ],
+        &boring_vault_svm::ID,
+    );
+    asset_data_pda
+}

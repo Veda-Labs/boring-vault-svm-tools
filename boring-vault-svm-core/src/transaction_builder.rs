@@ -90,37 +90,37 @@ impl TransactionBuilder {
         Ok(result.to_string())
     }
 
-    pub fn try_bundle_min(&mut self, payer: Keypair) -> Result<Vec<String>> {
-        let mut results = vec![];
-        // Add payer to signers if not present
-        let payer_pubkey = payer.pubkey();
-        if !self.signers.contains_key(&payer.pubkey()) {
-            self.signers.insert(payer.pubkey(), payer);
-        }
+    // pub fn try_bundle_min(&mut self, payer: Keypair) -> Result<Vec<String>> {
+    //     let mut results = vec![];
+    //     // Add payer to signers if not present
+    //     let payer_pubkey = payer.pubkey();
+    //     if !self.signers.contains_key(&payer.pubkey()) {
+    //         self.signers.insert(payer.pubkey(), payer);
+    //     }
 
-        // Convert HashMap values to Vec<&Keypair>
-        let signers: Vec<&Keypair> = self.signers.values().collect();
+    //     // Convert HashMap values to Vec<&Keypair>
+    //     let signers: Vec<&Keypair> = self.signers.values().collect();
 
-        // Create the transaction
-        let transaction = Transaction::new_signed_with_payer(
-            &self.instructions,
-            Some(&payer_pubkey),
-            &signers,
-            self.client.get_latest_blockhash()?,
-        );
+    //     // Create the transaction
+    //     let transaction = Transaction::new_signed_with_payer(
+    //         &self.instructions,
+    //         Some(&payer_pubkey),
+    //         &signers,
+    //         self.client.get_latest_blockhash()?,
+    //     );
 
-        results.push(
-            self.client
-                .send_and_confirm_transaction(&transaction)?
-                .to_string(),
-        );
+    //     results.push(
+    //         self.client
+    //             .send_and_confirm_transaction(&transaction)?
+    //             .to_string(),
+    //     );
 
-        // Clear both collections
-        self.instructions.clear();
-        self.signers.clear();
+    //     // Clear both collections
+    //     self.instructions.clear();
+    //     self.signers.clear();
 
-        Ok(results)
-    }
+    //     Ok(results)
+    // }
 
     pub fn initialize(
         &mut self,
@@ -179,6 +179,72 @@ impl TransactionBuilder {
             performance_fee_bps,
             withdraw_authority,
             strategist,
+        )?;
+
+        // Add instruction
+        self.instructions.push(ix);
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        Ok(())
+    }
+
+    pub fn update_asset_data(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        mint: Pubkey,
+        allow_deposits: bool,
+        allow_withdrawals: bool,
+        share_premium_bps: u16,
+        is_pegged_to_base_asset: bool,
+        price_feed: Pubkey,
+        inverse_price_feed: bool,
+        max_staleness: u64,
+        min_samples: u32,
+    ) -> Result<()> {
+        let ix = create_update_asset_data_instruction(
+            &signer.pubkey(),
+            vault_id,
+            mint,
+            allow_deposits,
+            allow_withdrawals,
+            share_premium_bps,
+            is_pegged_to_base_asset,
+            price_feed,
+            inverse_price_feed,
+            max_staleness,
+            min_samples,
+        )?;
+
+        // Add instruction
+        self.instructions.push(ix);
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        Ok(())
+    }
+
+    pub fn deposit_sol(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        user_pubkey: Pubkey,
+        deposit_amount: u64,
+        min_mint_amount: u64,
+    ) -> Result<()> {
+        let ix = create_deposit_sol_instruction(
+            &signer.pubkey(),
+            vault_id,
+            user_pubkey,
+            deposit_amount,
+            min_mint_amount,
         )?;
 
         // Add instruction

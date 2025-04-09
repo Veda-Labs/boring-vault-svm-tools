@@ -1,6 +1,6 @@
 use crate::utils::bindings::boring_vault_svm;
 use crate::utils::pdas::*;
-use anchor_lang::AccountDeserialize;
+use anchor_lang::{AccountDeserialize, ToAccountMetas};
 use anchor_lang::{Discriminator, InstructionData};
 use eyre::Result;
 use solana_address_lookup_table_interface::instruction::create_lookup_table;
@@ -11,6 +11,8 @@ use solana_program::system_program;
 use solana_program::sysvar::rent::ID as RENT_ID;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
+use spl_associated_token_account::get_associated_token_address;
+use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
 pub fn create_lut_instruction_return(
@@ -157,6 +159,127 @@ pub fn create_manage_instruction(
         program_id: boring_vault_svm::ID,
         accounts,
         data: manage_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_update_asset_data_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    mint: Pubkey,
+    allow_deposits: bool,
+    allow_withdrawals: bool,
+    share_premium_bps: u16,
+    is_pegged_to_base_asset: bool,
+    price_feed: Pubkey,
+    inverse_price_feed: bool,
+    max_staleness: u64,
+    min_samples: u32,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, mint);
+
+    let accounts = boring_vault_svm::client::accounts::UpdateAssetData {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+        system_program: system_program::ID,
+        asset: mint,
+        asset_data: asset_data_pda,
+    };
+
+    println!("=== PDA Debug ===");
+    println!("vault_state_pda: {}", vault_state_pda);
+    println!("mint: {}", mint);
+    println!("asset_data_pda: {}", asset_data_pda);
+    println!("===============================");
+
+    let asset_data = boring_vault_svm::accounts::AssetData {
+        allow_deposits,
+        allow_withdrawals,
+        share_premium_bps,
+        is_pegged_to_base_asset,
+        price_feed,
+        inverse_price_feed,
+        max_staleness,
+        min_samples,
+    };
+
+    let args = boring_vault_svm::types::UpdateAssetDataArgs {
+        vault_id,
+        asset_data,
+    };
+
+    let update_asset_data_ix_data = boring_vault_svm::client::args::UpdateAssetData { args }.data();
+
+    // Create the instruction.
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: update_asset_data_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_deposit_sol_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    user_pubkey: Pubkey,
+    deposit_amount: u64,
+    min_mint_amount: u64,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let native_mint = Pubkey::new_from_array([0; 32]);
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, native_mint);
+    let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
+    let share_mint = get_vault_share_mint(vault_state_pda);
+    let user_share_ata = get_associated_token_address(&user_pubkey, &share_mint);
+    let accounts = boring_vault_svm::client::accounts::DepositSol {
+        signer: *signer,
+        token_program_2022: TOKEN_2022_PROGRAM_ID,
+        system_program: system_program::ID,
+        associated_token_program: ASSOCIATED_TOKEN_PROGRAM_ID,
+        boring_vault_state: vault_state_pda,
+        boring_vault: vault_pda,
+        asset_data: asset_data_pda,
+        share_mint: share_mint,
+        user_shares: user_share_ata,
+        price_feed: Pubkey::default(),
+    };
+
+    println!("=== PDA Debug ===");
+    println!("vault_state_pda: {}", vault_state_pda);
+    println!("mint: {}", native_mint);
+    println!("asset_data_pda: {}", asset_data_pda);
+    println!("===============================");
+
+    println!("=== Deposit SOL Account Debug ===");
+    println!("signer: {}", signer);
+    println!("token_program_2022: {}", TOKEN_2022_PROGRAM_ID);
+    println!("system_program: {}", system_program::ID);
+    println!("associated_token_program: {}", ASSOCIATED_TOKEN_PROGRAM_ID);
+    println!("boring_vault_state: {}", vault_state_pda);
+    println!("boring_vault: {}", vault_pda);
+    println!("asset_data: {}", asset_data_pda);
+    println!("share_mint: {}", share_mint);
+    println!("user_shares: {}", user_share_ata);
+    println!("price_feed: {}", Pubkey::default());
+    println!("===============================");
+
+    let args = boring_vault_svm::types::DepositArgs {
+        vault_id,
+        deposit_amount,
+        min_mint_amount,
+    };
+
+    let deposit_sol_ix_data = boring_vault_svm::client::args::DepositSol { args }.data();
+
+    // Create the instruction.
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: deposit_sol_ix_data,
     };
 
     Ok(instruction)
