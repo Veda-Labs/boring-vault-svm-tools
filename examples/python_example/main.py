@@ -22,16 +22,17 @@ async def main():
     program_signer_bytes = get_program_keypair_secret()
 
     try:
-        print("Here")
+        # Create builder
+        print("Creating builder...")
+        builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
+
         authority_pubkey_str = "DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP"
 
-        # Initialize using our Rust binding
-        print("Initializing Boring Vault Program")
-        tx_hash = boring_vault_svm.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
-        print(f"Successfully initialized program: {tx_hash}")
-
-        print("Deploying Boring Vault")
-        tx_hash = boring_vault_svm.deploy(    
+        # Add instructions
+        print("Adding initialize instruction...")
+        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        print("Adding deploy instruction...")
+        builder.deploy(
             authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
             signer_bytes=signer_bytes,
             base_asset="So11111111111111111111111111111111111111112",  # wSOL
@@ -49,8 +50,10 @@ async def main():
             strategist=None  # Optional
         )
 
+        print("Sending instrucitons as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
 
-        print(f"Successfully deployed boring vault: {tx_hash}")
+        print(f"Success! Transaction hash: {tx_hash}")
 
     except Exception as e:
         print(f"Error: {e}")

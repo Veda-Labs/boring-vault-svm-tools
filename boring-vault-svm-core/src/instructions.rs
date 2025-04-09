@@ -50,6 +50,7 @@ pub fn create_initialize_instruction(authority: &Pubkey, signer: &Pubkey) -> Res
     Ok(instruction)
 }
 
+// TODO maybe this should take an optional vault_id, that way if you are deploying multiple in a bundle it works just fine!
 pub fn create_deploy_instruction(
     client: &RpcClient,
     authority: &Pubkey,
@@ -245,10 +246,15 @@ fn get_cpi_digest(
     // Ok((cpi_digest_pda, digest))
 }
 
+// TODO so if you are deploying multiple vaults in a bundle then this logic would be wrong.
 fn get_vault_id(client: &RpcClient) -> Result<u64> {
     let program_config_pda = get_program_config_pda();
-    let account = client.get_account(&program_config_pda)?;
-    let program_config =
-        boring_vault_svm::accounts::ProgramConfig::try_deserialize(&mut &account.data[..])?;
-    Ok(program_config.vault_count)
+    match client.get_account(&program_config_pda) {
+        Ok(account) => {
+            let program_config =
+                boring_vault_svm::accounts::ProgramConfig::try_deserialize(&mut &account.data[..])?;
+            Ok(program_config.vault_count)
+        }
+        Err(_) => Ok(0), // Return 0 if account not found
+    }
 }

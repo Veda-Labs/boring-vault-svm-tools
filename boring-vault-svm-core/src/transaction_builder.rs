@@ -1,54 +1,154 @@
+use std::collections::HashMap;
+
 use crate::instructions::*;
 use anchor_client::solana_sdk::signature::Keypair;
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
+use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 
 pub struct TransactionBuilder {
     client: RpcClient,
+    instructions: Vec<Instruction>,
+    signers: HashMap<Pubkey, Keypair>,
 }
 
 impl TransactionBuilder {
     pub fn new(rpc_url: String) -> Self {
         let client = RpcClient::new(rpc_url);
 
-        Self { client }
+        let instructions = vec![];
+        let signers = HashMap::new();
+        Self {
+            client,
+            instructions,
+            signers,
+        }
     }
 
     pub fn new_local() -> Self {
         let client = RpcClient::new("http://127.0.0.1:8899".to_string());
 
-        Self { client }
+        let instructions = vec![];
+        let signers = HashMap::new();
+        Self {
+            client,
+            instructions,
+            signers,
+        }
     }
 
-    pub fn initialize(
-        &self,
-        authority: &Pubkey,
-        signer: &Keypair,
-        program_signer: &Keypair,
-    ) -> Result<String> {
-        let ix = create_initialize_instruction(authority, &signer.pubkey())?;
+    pub fn clear(&mut self) -> Result<()> {
+        // Clear both collections
+        self.instructions.clear();
+        self.signers.clear();
+
+        Ok(())
+    }
+
+    pub fn try_bundle_all(&mut self, payer: Keypair) -> Result<String> {
+        // Add payer to signers if not present
+        let payer_pubkey = payer.pubkey();
+        if !self.signers.contains_key(&payer.pubkey()) {
+            self.signers.insert(payer.pubkey(), payer);
+        }
+
+        // Convert HashMap values to Vec<&Keypair>
+        let signers: Vec<&Keypair> = self.signers.values().collect();
 
         // Create the transaction
         let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&signer.pubkey()),
-            &[signer, &program_signer],
+            &self.instructions,
+            Some(&payer_pubkey),
+            &signers,
             self.client.get_latest_blockhash()?,
         );
 
+        let msg_serialized = transaction.message().serialize();
+        let signatures = transaction.signatures.len();
+
+        println!("Message size: {}", msg_serialized.len());
+        println!("Signatures size: {}", signatures * 64);
+        println!("Total Size: {}", msg_serialized.len() + signatures * 64);
+        // docs https://solana.com/vi/docs/core/transactions
+        // Message size: 559 bytes
+        // Header: 65 bytes (32 + 32 + 1)
+        // Signatures: 128 bytes (2 * 64)
+        // Account metadata: 8 bytes (8 accounts * 1 byte)
+        // Total: 559 + 65 + 128 + 8 = 760 bytes
+        // Max solana tx size is 1232
+        // According to the docs it seems like num signatures * 64 + msesage size serialized msut be less than or equal to 1232
+
         let result = self.client.send_and_confirm_transaction(&transaction)?;
+
+        // Clear both collections
+        self.instructions.clear();
+        self.signers.clear();
 
         Ok(result.to_string())
     }
 
+    pub fn try_bundle_min(&mut self, payer: Keypair) -> Result<Vec<String>> {
+        let mut results = vec![];
+        // Add payer to signers if not present
+        let payer_pubkey = payer.pubkey();
+        if !self.signers.contains_key(&payer.pubkey()) {
+            self.signers.insert(payer.pubkey(), payer);
+        }
+
+        // Convert HashMap values to Vec<&Keypair>
+        let signers: Vec<&Keypair> = self.signers.values().collect();
+
+        // Create the transaction
+        let transaction = Transaction::new_signed_with_payer(
+            &self.instructions,
+            Some(&payer_pubkey),
+            &signers,
+            self.client.get_latest_blockhash()?,
+        );
+
+        results.push(
+            self.client
+                .send_and_confirm_transaction(&transaction)?
+                .to_string(),
+        );
+
+        // Clear both collections
+        self.instructions.clear();
+        self.signers.clear();
+
+        Ok(results)
+    }
+
+    pub fn initialize(
+        &mut self,
+        authority: Pubkey,
+        signer: Keypair,
+        program_signer: Keypair,
+    ) -> Result<()> {
+        let ix = create_initialize_instruction(&authority, &signer.pubkey())?;
+
+        // Add instruction
+        self.instructions.push(ix);
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+        if !self.signers.contains_key(&program_signer.pubkey()) {
+            self.signers.insert(program_signer.pubkey(), program_signer);
+        }
+
+        Ok(())
+    }
+
     pub fn deploy(
-        &self,
-        authority: &Pubkey,
-        signer: &Keypair,
-        base_asset: &Pubkey,
+        &mut self,
+        authority: Pubkey,
+        signer: Keypair,
+        base_asset: Pubkey,
         name: String,
         symbol: String,
         exchange_rate_provider: Option<Pubkey>,
@@ -61,12 +161,12 @@ impl TransactionBuilder {
         performance_fee_bps: Option<u16>,
         withdraw_authority: Option<Pubkey>,
         strategist: Option<Pubkey>,
-    ) -> Result<String> {
+    ) -> Result<()> {
         let ix = create_deploy_instruction(
             &self.client,
-            authority,
+            &authority,
             &signer.pubkey(),
-            base_asset,
+            &base_asset,
             name,
             symbol,
             exchange_rate_provider,
@@ -80,17 +180,16 @@ impl TransactionBuilder {
             withdraw_authority,
             strategist,
         )?;
-        // Create the transaction
-        let transaction = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&signer.pubkey()),
-            &[signer],
-            self.client.get_latest_blockhash()?,
-        );
 
-        let result = self.client.send_and_confirm_transaction(&transaction)?;
+        // Add instruction
+        self.instructions.push(ix);
 
-        Ok(result.to_string())
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        Ok(())
     }
 
     // TODO Add remaining calls
