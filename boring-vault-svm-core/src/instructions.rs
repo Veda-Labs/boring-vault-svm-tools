@@ -12,9 +12,6 @@ use solana_program::sysvar::rent::ID as RENT_ID;
 use solana_pubkey::Pubkey;
 use solana_transaction::Transaction;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
-use std::str::FromStr;
-
-const JITOSOL: &str = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn";
 
 pub fn create_lut_instruction_return(
     signer: &Pubkey,
@@ -56,6 +53,19 @@ pub fn create_deploy_instruction(
     client: &RpcClient,
     authority: &Pubkey,
     signer: &Pubkey,
+    base_asset: &Pubkey,
+    name: String,
+    symbol: String,
+    exchange_rate_provider: Option<Pubkey>,
+    exchange_rate: u64,
+    payout_address: Option<Pubkey>,
+    allowed_exchange_rate_change_upper_bound: u16,
+    allowed_exchange_rate_change_lower_bound: u16,
+    minimum_update_delay_in_seconds: u32,
+    platform_fee_bps: Option<u16>,
+    performance_fee_bps: Option<u16>,
+    withdraw_authority: Option<Pubkey>,
+    strategist: Option<Pubkey>,
 ) -> Result<Instruction> {
     let vault_id = get_vault_id(client)?;
     let vault_state_pda = get_vault_state_pda(vault_id);
@@ -64,25 +74,33 @@ pub fn create_deploy_instruction(
         AccountMeta::new(get_program_config_pda(), false),
         AccountMeta::new(vault_state_pda, false),
         AccountMeta::new(get_vault_share_mint(vault_state_pda), false),
-        AccountMeta::new_readonly(Pubkey::from_str(JITOSOL).unwrap(), false),
+        AccountMeta::new_readonly(*base_asset, false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new_readonly(TOKEN_2022_PROGRAM_ID, false),
     ];
 
+    let authority = *authority;
+    let exchange_rate_provider = exchange_rate_provider.unwrap_or_else(|| authority);
+    let payout_address = payout_address.unwrap_or_else(|| authority);
+    let platform_fee_bps = platform_fee_bps.unwrap_or_else(|| 0);
+    let performance_fee_bps = performance_fee_bps.unwrap_or_else(|| 0);
+    let withdraw_authority = withdraw_authority.unwrap_or_default();
+    let strategist = strategist.unwrap_or_else(|| authority);
+
     let args = boring_vault_svm::types::DeployArgs {
-        authority: *authority,
-        name: "Test Boring Vault".to_string(),
-        symbol: "TBV".to_string(),
-        exchange_rate_provider: *authority,
-        exchange_rate: 1_000_000_000,
-        payout_address: *authority,
-        allowed_exchange_rate_change_upper_bound: 10_100,
-        allowed_exchange_rate_change_lower_bound: 9_900,
-        minimum_update_delay_in_seconds: 3_600,
-        platform_fee_bps: 0,
-        performance_fee_bps: 0,
-        withdraw_authority: Pubkey::default(),
-        strategist: *authority,
+        authority,
+        name,
+        symbol,
+        exchange_rate_provider,
+        exchange_rate,
+        payout_address,
+        allowed_exchange_rate_change_upper_bound,
+        allowed_exchange_rate_change_lower_bound,
+        minimum_update_delay_in_seconds,
+        platform_fee_bps,
+        performance_fee_bps,
+        withdraw_authority,
+        strategist,
     };
     let deploy_ix_data = boring_vault_svm::client::args::Deploy { args }.data();
 

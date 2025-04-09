@@ -38,8 +38,42 @@ impl TransactionBuilder {
         Ok(())
     }
 
-    pub fn deploy(&self, authority: &Pubkey, signer: &Keypair) -> Result<()> {
-        let ix = create_deploy_instruction(&self.client, authority, &signer.pubkey())?;
+    pub fn deploy(
+        &self,
+        authority: &Pubkey,
+        signer: &Keypair,
+        base_asset: &Pubkey,
+        name: String,
+        symbol: String,
+        exchange_rate_provider: Option<Pubkey>,
+        exchange_rate: u64,
+        payout_address: Option<Pubkey>,
+        allowed_exchange_rate_change_upper_bound: u16,
+        allowed_exchange_rate_change_lower_bound: u16,
+        minimum_update_delay_in_seconds: u32,
+        platform_fee_bps: Option<u16>,
+        performance_fee_bps: Option<u16>,
+        withdraw_authority: Option<Pubkey>,
+        strategist: Option<Pubkey>,
+    ) -> Result<()> {
+        let ix = create_deploy_instruction(
+            &self.client,
+            authority,
+            &signer.pubkey(),
+            base_asset,
+            name,
+            symbol,
+            exchange_rate_provider,
+            exchange_rate,
+            payout_address,
+            allowed_exchange_rate_change_upper_bound,
+            allowed_exchange_rate_change_lower_bound,
+            minimum_update_delay_in_seconds,
+            platform_fee_bps,
+            performance_fee_bps,
+            withdraw_authority,
+            strategist,
+        )?;
         // Create the transaction
         let transaction = Transaction::new_signed_with_payer(
             &[ix],
