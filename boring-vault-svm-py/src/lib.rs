@@ -7,19 +7,26 @@ use std::str::FromStr;
 // TODO could add view functions?
 // TODO also maybe the tx builder should be more of a class where you add txs to it, then you have 1 call to execute the batch, or maybe execute single?
 // would need logic to break up a lot of actions into multiple batches though
+// TODO return tx hash?
 #[pyfunction]
-fn initialize(authority: String, signer_bytes: &[u8]) -> PyResult<()> {
+fn initialize(
+    authority: String,
+    signer_bytes: &[u8],
+    program_signer_bytes: &[u8],
+) -> PyResult<String> {
     let builder = transaction_builder::TransactionBuilder::new_local();
     let authority = Pubkey::from_str(&authority)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
     let signer = Keypair::from_bytes(signer_bytes)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+    let program_signer = Keypair::from_bytes(program_signer_bytes)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
 
-    builder
-        .initialize(&authority, &signer)
+    let tx_hash = builder
+        .initialize(&authority, &signer, &program_signer)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
-    Ok(())
+    Ok(tx_hash)
 }
 
 #[pyfunction]
@@ -39,7 +46,7 @@ fn deploy(
     performance_fee_bps: Option<u16>,
     withdraw_authority: Option<String>,
     strategist: Option<String>,
-) -> PyResult<()> {
+) -> PyResult<String> {
     let builder = transaction_builder::TransactionBuilder::new_local();
     let authority = Pubkey::from_str(&authority)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
@@ -81,7 +88,7 @@ fn deploy(
         None => None,
     };
 
-    builder
+    let tx_hash = builder
         .deploy(
             &authority,
             &signer,
@@ -101,7 +108,7 @@ fn deploy(
         )
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
-    Ok(())
+    Ok(tx_hash)
 }
 
 #[pymodule]

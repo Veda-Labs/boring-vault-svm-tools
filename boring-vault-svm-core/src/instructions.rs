@@ -31,6 +31,7 @@ pub fn create_lut_instruction_return(
 pub fn create_initialize_instruction(authority: &Pubkey, signer: &Pubkey) -> Result<Instruction> {
     let accounts = vec![
         AccountMeta::new(*signer, true),
+        AccountMeta::new(boring_vault_svm::ID, true),
         AccountMeta::new(get_program_config_pda(), false),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
@@ -167,16 +168,9 @@ pub fn create_initialize_cpi_digest_instruction(
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
     operators: boring_vault_svm::types::Operators,
-    expected_size: u16,
 ) -> Result<Instruction> {
-    let (cpi_digest_pda, digest) = get_cpi_digest(
-        client,
-        vault_id,
-        ix_program_id,
-        ix_data,
-        operators.clone(),
-        expected_size,
-    )?;
+    let (cpi_digest_pda, digest) =
+        get_cpi_digest(client, vault_id, ix_program_id, ix_data, operators.clone())?;
 
     println!("digest pda: {}", cpi_digest_pda);
 
@@ -192,7 +186,6 @@ pub fn create_initialize_cpi_digest_instruction(
         vault_id,
         cpi_digest: digest,
         operators,
-        expected_size,
     };
 
     let initialize_cpi_digest_ix_data =
@@ -214,7 +207,6 @@ fn get_cpi_digest(
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
     operators: boring_vault_svm::types::Operators,
-    expected_size: u16,
 ) -> Result<(Pubkey, [u8; 32])> {
     let accounts = vec![AccountMeta::new_readonly(system_program::ID, false)];
 
@@ -222,7 +214,6 @@ fn get_cpi_digest(
         ix_program_id: ix_program_id,
         ix_data: ix_data,
         operators: operators,
-        expected_size: expected_size,
     };
 
     let view_cpi_digest_ix_data = boring_vault_svm::client::args::ViewCpiDigest { args }.data();

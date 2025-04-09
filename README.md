@@ -16,7 +16,7 @@ This example demonstrates how to use the boring-vault-svm-py Rust bindings in Py
    cargo build
    ```
 
-3. Rename the library file
+3. Rename the library file(MIGHT NOT BE NEEDED)
 
    ```bash
    # For macOS

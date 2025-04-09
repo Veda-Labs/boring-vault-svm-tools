@@ -2,7 +2,8 @@ import boring_vault_svm
 import asyncio
 import json
 from pathlib import Path
-
+import os
+import json
 
 # Default funded keypair
 def get_default_keypair_secret():
@@ -11,19 +12,26 @@ def get_default_keypair_secret():
         secret_key_data = json.load(f)
         return bytes(secret_key_data)
 
+def get_program_keypair_secret():
+    with open("../../program_keypairs/boring_vault_svm-keypair.json", "r") as f:
+        secret_key_data = json.load(f)
+        return bytes(secret_key_data)
 
 async def main():
     signer_bytes = get_default_keypair_secret()
+    program_signer_bytes = get_program_keypair_secret()
 
     try:
         print("Here")
         authority_pubkey_str = "DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP"
-        w_sol_pubkey_str = "So11111111111111111111111111111111111111112"
 
         # Initialize using our Rust binding
-        # boring_vault_svm.initialize(authority_pubkey_str, signer_bytes)
+        print("Initializing Boring Vault Program")
+        tx_hash = boring_vault_svm.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        print(f"Successfully initialized program: {tx_hash}")
 
-        boring_vault_svm.deploy(    
+        print("Deploying Boring Vault")
+        tx_hash = boring_vault_svm.deploy(    
             authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
             signer_bytes=signer_bytes,
             base_asset="So11111111111111111111111111111111111111112",  # wSOL
@@ -40,10 +48,9 @@ async def main():
             withdraw_authority=None,  # Optional
             strategist=None  # Optional
         )
-        
 
-        print(f"Successfully initialized with:")
-        print(f"Authority: {authority_pubkey_str}")
+
+        print(f"Successfully deployed boring vault: {tx_hash}")
 
     except Exception as e:
         print(f"Error: {e}")

@@ -16,16 +16,7 @@
         "* `ctx` - The context of accounts",
         "* `vault_id` - The vault id"
       ],
-      "discriminator": [
-        107,
-        86,
-        198,
-        91,
-        33,
-        12,
-        107,
-        160
-      ],
+      "discriminator": [107, 86, 198, 91, 33, 12, 107, 160],
       "accounts": [
         {
           "name": "signer",
@@ -56,16 +47,7 @@
         "# Errors",
         "* `BoringErrorCode::InvalidTokenProgram` - If token program doesn't match mint"
       ],
-      "discriminator": [
-        189,
-        160,
-        186,
-        244,
-        248,
-        13,
-        244,
-        198
-      ],
+      "discriminator": [189, 160, 186, 244, 248, 13, 244, 198],
       "accounts": [
         {
           "name": "signer",
@@ -83,16 +65,12 @@
         },
         {
           "name": "payout_ata",
-          "docs": [
-            "Payout's Token associated token account"
-          ],
+          "docs": ["Payout's Token associated token account"],
           "writable": true
         },
         {
           "name": "vault_ata",
-          "docs": [
-            "Vault's Token associated token account"
-          ],
+          "docs": ["Vault's Token associated token account"],
           "writable": true
         },
         {
@@ -128,16 +106,7 @@
         "* `ctx` - The context of accounts",
         "* `_args` - Used to derive account"
       ],
-      "discriminator": [
-        222,
-        229,
-        29,
-        88,
-        144,
-        101,
-        61,
-        79
-      ],
+      "discriminator": [222, 229, 29, 88, 144, 101, 61, 79],
       "accounts": [
         {
           "name": "signer",
@@ -154,11 +123,13 @@
       ],
       "args": [
         {
-          "name": "_args",
+          "name": "vault_id",
+          "type": "u64"
+        },
+        {
+          "name": "digest",
           "type": {
-            "defined": {
-              "name": "CpiDigestArgs"
-            }
+            "array": ["u8", 32]
           }
         }
       ]
@@ -181,16 +152,7 @@
         "* `BoringErrorCode::InvalidAllowedExchangeRateChangeUpperBound` - If upper bound is invalid",
         "* `BoringErrorCode::InvalidAllowedExchangeRateChangeLowerBound` - If lower bound is invalid"
       ],
-      "discriminator": [
-        255,
-        144,
-        53,
-        50,
-        163,
-        209,
-        159,
-        102
-      ],
+      "discriminator": [255, 144, 53, 50, 163, 209, 159, 102],
       "accounts": [
         {
           "name": "signer",
@@ -245,16 +207,7 @@
         "* `BoringErrorCode::InvalidPlatformFeeBps` - If platform fee exceeds maximum",
         "* `BoringErrorCode::InvalidPerformanceFeeBps` - If performance fee exceeds maximum"
       ],
-      "discriminator": [
-        67,
-        36,
-        143,
-        118,
-        36,
-        164,
-        92,
-        217
-      ],
+      "discriminator": [67, 36, 143, 118, 36, 164, 92, 217],
       "accounts": [
         {
           "name": "signer",
@@ -268,14 +221,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -286,27 +232,13 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The mint of the share token."
-          ],
+          "docs": ["The mint of the share token."],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  45,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110
-                ]
+                "value": [115, 104, 97, 114, 101, 45, 116, 111, 107, 101, 110]
               },
               {
                 "kind": "account",
@@ -357,16 +289,7 @@
         "* `BoringErrorCode::AssetNotAllowed` - If deposits are not allowed",
         "* `BoringErrorCode::InvalidTokenProgram` - If token program doesn't match mint"
       ],
-      "discriminator": [
-        242,
-        35,
-        198,
-        137,
-        82,
-        225,
-        242,
-        182
-      ],
+      "discriminator": [242, 35, 198, 137, 82, 225, 242, 182],
       "accounts": [
         {
           "name": "signer",
@@ -388,18 +311,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -414,16 +326,12 @@
         },
         {
           "name": "user_ata",
-          "docs": [
-            "User's Token associated token account"
-          ],
+          "docs": ["User's Token associated token account"],
           "writable": true
         },
         {
           "name": "vault_ata",
-          "docs": [
-            "Vault's Token associated token account"
-          ],
+          "docs": ["Vault's Token associated token account"],
           "writable": true
         },
         {
@@ -444,27 +352,13 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The vault's share mint"
-          ],
+          "docs": ["The vault's share mint"],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  45,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110
-                ]
+                "value": [115, 104, 97, 114, 101, 45, 116, 111, 107, 101, 110]
               },
               {
                 "kind": "account",
@@ -475,9 +369,7 @@
         },
         {
           "name": "user_shares",
-          "docs": [
-            "The user's share token 2022 account"
-          ],
+          "docs": ["The user's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -497,38 +389,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -568,16 +431,7 @@
         "* `BoringErrorCode::AssetNotAllowed` - If deposits are not allowed",
         "* `BoringErrorCode::SlippageExceeded` - If min share amount is not met"
       ],
-      "discriminator": [
-        108,
-        81,
-        78,
-        117,
-        125,
-        155,
-        56,
-        200
-      ],
+      "discriminator": [108, 81, 78, 117, 125, 155, 56, 200],
       "accounts": [
         {
           "name": "signer",
@@ -609,18 +463,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -629,38 +472,8 @@
               {
                 "kind": "const",
                 "value": [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                 ]
               }
             ]
@@ -668,27 +481,13 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The vault's share mint"
-          ],
+          "docs": ["The vault's share mint"],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  45,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110
-                ]
+                "value": [115, 104, 97, 114, 101, 45, 116, 111, 107, 101, 110]
               },
               {
                 "kind": "account",
@@ -699,9 +498,7 @@
         },
         {
           "name": "user_shares",
-          "docs": [
-            "The user's share token 2022 account"
-          ],
+          "docs": ["The user's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -721,38 +518,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -785,16 +553,7 @@
         "# Returns",
         "* `u64` - The current exchange rate"
       ],
-      "discriminator": [
-        177,
-        72,
-        238,
-        202,
-        231,
-        17,
-        128,
-        243
-      ],
+      "discriminator": [177, 72, 238, 202, 231, 17, 128, 243],
       "accounts": [
         {
           "name": "boring_vault_state"
@@ -818,18 +577,11 @@
         "* `vault_id` - The vault ID",
         "",
         "# Returns",
-        "* `u64` - The exchange rate in quote asset"
+        "* `u64` - The exchange rate in quote asset",
+        "# Note",
+        "To get the rate in SOL, pass in wSOL (Wrapped SOL) as the quote_mint"
       ],
-      "discriminator": [
-        65,
-        171,
-        137,
-        184,
-        253,
-        193,
-        43,
-        246
-      ],
+      "discriminator": [65, 171, 137, 184, 253, 193, 43, 246],
       "accounts": [
         {
           "name": "boring_vault_state"
@@ -843,18 +595,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -891,19 +632,13 @@
         "# Returns",
         "* `u64` - The exchange rate in quote asset",
         "",
+        "# Note",
+        "To get the rate in SOL, pass in wSOL (Wrapped SOL) as the quote_mint",
+        "",
         "# Errors",
         "* `BoringErrorCode::VaultPaused` - If vault is paused"
       ],
-      "discriminator": [
-        39,
-        184,
-        226,
-        184,
-        233,
-        97,
-        126,
-        152
-      ],
+      "discriminator": [39, 184, 226, 184, 233, 97, 126, 152],
       "accounts": [
         {
           "name": "boring_vault_state"
@@ -917,18 +652,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -968,16 +692,7 @@
         "# Errors",
         "* `BoringErrorCode::VaultPaused` - If vault is paused"
       ],
-      "discriminator": [
-        40,
-        73,
-        142,
-        82,
-        152,
-        120,
-        254,
-        19
-      ],
+      "discriminator": [40, 73, 142, 82, 152, 120, 254, 19],
       "accounts": [
         {
           "name": "boring_vault_state"
@@ -1003,21 +718,17 @@
         "# Returns",
         "* `Result<()>` - Result indicating success or failure"
       ],
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
       "accounts": [
         {
           "name": "signer",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "program",
+          "signer": true,
+          "address": "5ZRnXG4GsUMLaN7w2DtJV1cgLgcXHmuHCmJ2MxoorWCE"
         },
         {
           "name": "config",
@@ -1026,14 +737,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1062,16 +766,7 @@
         "* `ctx` - The context of accounts",
         "* `args` - The CPI digest initialize arguments"
       ],
-      "discriminator": [
-        137,
-        9,
-        120,
-        93,
-        182,
-        194,
-        100,
-        147
-      ],
+      "discriminator": [137, 9, 120, 93, 182, 194, 100, 147],
       "accounts": [
         {
           "name": "signer",
@@ -1113,16 +808,7 @@
         "# Errors",
         "* `BoringErrorCode::InvalidCpiDigest` - If CPI digest is invalid"
       ],
-      "discriminator": [
-        168,
-        141,
-        131,
-        54,
-        79,
-        150,
-        88,
-        36
-      ],
+      "discriminator": [168, 141, 131, 54, 79, 150, 88, 36],
       "accounts": [
         {
           "name": "signer",
@@ -1162,16 +848,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        211,
-        22,
-        221,
-        251,
-        74,
-        121,
-        193,
-        47
-      ],
+      "discriminator": [211, 22, 221, 251, 74, 121, 193, 47],
       "accounts": [
         {
           "name": "signer",
@@ -1202,16 +879,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        135,
-        238,
-        218,
-        4,
-        120,
-        77,
-        207,
-        156
-      ],
+      "discriminator": [135, 238, 218, 4, 120, 77, 207, 156],
       "accounts": [
         {
           "name": "signer",
@@ -1249,16 +917,7 @@
         "* `BoringErrorCode::InvalidPlatformFeeBps` - If platform fee exceeds maximum",
         "* `BoringErrorCode::InvalidPerformanceFeeBps` - If performance fee exceeds maximum"
       ],
-      "discriminator": [
-        137,
-        178,
-        49,
-        58,
-        0,
-        245,
-        242,
-        190
-      ],
+      "discriminator": [137, 178, 49, 58, 0, 245, 242, 190],
       "accounts": [
         {
           "name": "signer",
@@ -1298,16 +957,7 @@
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority",
         "* `BoringErrorCode::InvalidPayoutAddress` - If payout address is zero address"
       ],
-      "discriminator": [
-        55,
-        43,
-        132,
-        51,
-        227,
-        169,
-        242,
-        195
-      ],
+      "discriminator": [55, 43, 132, 51, 227, 169, 242, 195],
       "accounts": [
         {
           "name": "signer",
@@ -1342,16 +992,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        185,
-        103,
-        1,
-        57,
-        12,
-        152,
-        49,
-        157
-      ],
+      "discriminator": [185, 103, 1, 57, 12, 152, 49, 157],
       "accounts": [
         {
           "name": "signer",
@@ -1386,16 +1027,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        199,
-        146,
-        140,
-        67,
-        1,
-        90,
-        8,
-        222
-      ],
+      "discriminator": [199, 146, 140, 67, 1, 90, 8, 222],
       "accounts": [
         {
           "name": "signer",
@@ -1430,16 +1062,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        152,
-        197,
-        103,
-        249,
-        56,
-        180,
-        0,
-        172
-      ],
+      "discriminator": [152, 197, 103, 249, 56, 180, 0, 172],
       "accounts": [
         {
           "name": "signer",
@@ -1471,16 +1094,7 @@
         "* `vault_id` - The vault id",
         "* `pending_authority` - The new pending authority"
       ],
-      "discriminator": [
-        48,
-        169,
-        76,
-        72,
-        229,
-        180,
-        55,
-        161
-      ],
+      "discriminator": [48, 169, 76, 72, 229, 180, 55, 161],
       "accounts": [
         {
           "name": "signer",
@@ -1514,16 +1128,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        169,
-        144,
-        4,
-        38,
-        10,
-        141,
-        188,
-        255
-      ],
+      "discriminator": [169, 144, 4, 38, 10, 141, 188, 255],
       "accounts": [
         {
           "name": "signer",
@@ -1556,16 +1161,7 @@
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority",
         "* `BoringErrorCode::InvalidPriceFeed` - If price feed is invalid for non-pegged asset"
       ],
-      "discriminator": [
-        73,
-        69,
-        104,
-        229,
-        48,
-        169,
-        98,
-        67
-      ],
+      "discriminator": [73, 69, 104, 229, 48, 169, 98, 67],
       "accounts": [
         {
           "name": "signer",
@@ -1580,7 +1176,11 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "asset"
+          "name": "asset",
+          "docs": [
+            "would only prevent deposits with that asset, which is not a security risk since the asset mint",
+            "account would not exist."
+          ]
         },
         {
           "name": "asset_data",
@@ -1589,18 +1189,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -1642,16 +1231,7 @@
         "# Returns",
         "* `Result<()>` - Result indicating success or failure"
       ],
-      "discriminator": [
-        69,
-        102,
-        48,
-        181,
-        8,
-        41,
-        8,
-        1
-      ],
+      "discriminator": [69, 102, 48, 181, 8, 41, 8, 1],
       "accounts": [
         {
           "name": "signer",
@@ -1667,19 +1247,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  45,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110
-                ]
+                "value": [115, 104, 97, 114, 101, 45, 116, 111, 107, 101, 110]
               },
               {
                 "kind": "account",
@@ -1713,16 +1281,7 @@
         "# Errors",
         "* `BoringErrorCode::NotAuthorized` - If signer is not the vault authority"
       ],
-      "discriminator": [
-        77,
-        178,
-        71,
-        17,
-        210,
-        228,
-        196,
-        230
-      ],
+      "discriminator": [77, 178, 71, 17, 210, 228, 196, 230],
       "accounts": [
         {
           "name": "signer",
@@ -1756,16 +1315,7 @@
         "# Returns",
         "* `[u8; 32]` - The CPI digest"
       ],
-      "discriminator": [
-        243,
-        10,
-        27,
-        160,
-        175,
-        112,
-        119,
-        60
-      ],
+      "discriminator": [243, 10, 27, 160, 175, 112, 119, 60],
       "accounts": [
         {
           "name": "system_program",
@@ -1783,10 +1333,7 @@
         }
       ],
       "returns": {
-        "array": [
-          "u8",
-          32
-        ]
+        "array": ["u8", 32]
       }
     },
     {
@@ -1808,16 +1355,7 @@
         "* `BoringErrorCode::AssetNotAllowed` - If withdrawals are not allowed",
         "* `BoringErrorCode::InvalidTokenProgram` - If token program doesn't match mint"
       ],
-      "discriminator": [
-        183,
-        18,
-        70,
-        156,
-        148,
-        109,
-        161,
-        34
-      ],
+      "discriminator": [183, 18, 70, 156, 148, 109, 161, 34],
       "accounts": [
         {
           "name": "signer",
@@ -1839,18 +1377,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  97,
-                  115,
-                  115,
-                  101,
-                  116,
-                  45,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
+                "value": [97, 115, 115, 101, 116, 45, 100, 97, 116, 97]
               },
               {
                 "kind": "account",
@@ -1865,16 +1392,12 @@
         },
         {
           "name": "user_ata",
-          "docs": [
-            "User's Token associated token account"
-          ],
+          "docs": ["User's Token associated token account"],
           "writable": true
         },
         {
           "name": "vault_ata",
-          "docs": [
-            "Vault's Token associated token account"
-          ],
+          "docs": ["Vault's Token associated token account"],
           "writable": true
         },
         {
@@ -1895,27 +1418,13 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The vault's share mint"
-          ],
+          "docs": ["The vault's share mint"],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  45,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110
-                ]
+                "value": [115, 104, 97, 114, 101, 45, 116, 111, 107, 101, 110]
               },
               {
                 "kind": "account",
@@ -1926,9 +1435,7 @@
         },
         {
           "name": "user_shares",
-          "docs": [
-            "The user's share token 2022 account"
-          ],
+          "docs": ["The user's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -1948,38 +1455,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -2004,55 +1482,19 @@
   "accounts": [
     {
       "name": "AssetData",
-      "discriminator": [
-        91,
-        115,
-        36,
-        105,
-        141,
-        93,
-        1,
-        135
-      ]
+      "discriminator": [91, 115, 36, 105, 141, 93, 1, 135]
     },
     {
       "name": "BoringVault",
-      "discriminator": [
-        35,
-        84,
-        44,
-        89,
-        150,
-        55,
-        236,
-        25
-      ]
+      "discriminator": [35, 84, 44, 89, 150, 55, 236, 25]
     },
     {
       "name": "CpiDigest",
-      "discriminator": [
-        23,
-        4,
-        189,
-        185,
-        96,
-        27,
-        98,
-        226
-      ]
+      "discriminator": [23, 4, 189, 185, 96, 27, 98, 226]
     },
     {
       "name": "ProgramConfig",
-      "discriminator": [
-        196,
-        210,
-        90,
-        231,
-        144,
-        149,
-        140,
-        63
-      ]
+      "discriminator": [196, 210, 90, 231, 144, 149, 140, 63]
     }
   ],
   "errors": [
@@ -2113,66 +1555,61 @@
     },
     {
       "code": 6011,
-      "name": "InvalidTokenAccount",
-      "msg": "Invalid Token Account"
-    },
-    {
-      "code": 6012,
       "name": "InvalidExchangeRateProvider",
       "msg": "Invalid Exchange Rate Provider"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "InvalidAuthority",
       "msg": "Invalid Authority"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "InvalidPayoutAddress",
       "msg": "Invalid Payout Address"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "InvalidAllowedExchangeRateChangeUpperBound",
       "msg": "Invalid Allowed Exchange Rate Change Upper Bound"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "InvalidAllowedExchangeRateChangeLowerBound",
       "msg": "Invalid Allowed Exchange Rate Change Lower Bound"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "InvalidPlatformFeeBps",
       "msg": "Invalid Platform Fee BPS"
     },
     {
-      "code": 6018,
+      "code": 6017,
       "name": "InvalidPerformanceFeeBps",
       "msg": "Invalid Performance Fee BPS"
     },
     {
-      "code": 6019,
+      "code": 6018,
       "name": "InvalidDecimals",
       "msg": "Invalid Decimals"
     },
     {
-      "code": 6020,
+      "code": 6019,
       "name": "InvalidBaseAsset",
       "msg": "Invalid Base Asset"
     },
     {
-      "code": 6021,
+      "code": 6020,
       "name": "DecimalConversionFailed",
       "msg": "Decimal conversion failed"
     },
     {
-      "code": 6022,
+      "code": 6021,
       "name": "MaximumSharePremiumExceeded",
       "msg": "Maximum share premium exceeded"
     },
     {
-      "code": 6023,
+      "code": 6022,
       "name": "InvalidStrategist",
       "msg": "Invalid Strategist"
     }
@@ -2282,10 +1719,6 @@
                 "name": "Operators"
               }
             }
-          },
-          {
-            "name": "expected_size",
-            "type": "u16"
           }
         ]
       }
@@ -2302,10 +1735,7 @@
           {
             "name": "cpi_digest",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "array": ["u8", 32]
             }
           },
           {
@@ -2315,10 +1745,6 @@
                 "name": "Operators"
               }
             }
-          },
-          {
-            "name": "expected_size",
-            "type": "u16"
           }
         ]
       }
@@ -2449,16 +1875,14 @@
           },
           {
             "name": "IngestInstruction",
-            "fields": [
-              "u32",
-              "u8"
-            ]
+            "fields": ["u32", "u8"]
           },
           {
             "name": "IngestAccount",
-            "fields": [
-              "u8"
-            ]
+            "fields": ["u8"]
+          },
+          {
+            "name": "IngestInstructionDataSize"
           }
         ]
       }
@@ -2504,16 +1928,12 @@
         "fields": [
           {
             "name": "base_asset",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "pubkey"
           },
           {
             "name": "decimals",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "u8"
           },
           {
@@ -2598,9 +2018,7 @@
         "fields": [
           {
             "name": "vault_id",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "u64"
           },
           {
@@ -2617,9 +2035,7 @@
           },
           {
             "name": "share_mint",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "pubkey"
           },
           {
@@ -2653,10 +2069,6 @@
                 "name": "Operators"
               }
             }
-          },
-          {
-            "name": "expected_size",
-            "type": "u16"
           }
         ]
       }

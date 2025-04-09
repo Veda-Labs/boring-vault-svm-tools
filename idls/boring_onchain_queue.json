@@ -20,16 +20,7 @@
         "* `RequestDeadlineNotPassed` - If request deadline hasn't passed yet",
         "* `InvalidShareMint` - If share mint doesn't match queue state"
       ],
-      "discriminator": [
-        112,
-        53,
-        226,
-        58,
-        158,
-        30,
-        37,
-        168
-      ],
+      "discriminator": [112, 53, 226, 58, 158, 30, 37, 168],
       "accounts": [
         {
           "name": "signer",
@@ -38,9 +29,7 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The vault's share mint"
-          ]
+          "docs": ["The vault's share mint"]
         },
         {
           "name": "withdraw_request",
@@ -54,9 +43,7 @@
         },
         {
           "name": "user_shares",
-          "docs": [
-            "The user's share token 2022 account"
-          ],
+          "docs": ["The user's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -76,47 +63,16 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
         },
         {
           "name": "queue_shares",
-          "docs": [
-            "The queue's share token 2022 account"
-          ],
+          "docs": ["The queue's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -136,38 +92,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -193,16 +120,7 @@
         "* `ctx` - The context of accounts",
         "* `args` - The deployment arguments containing vault configuration"
       ],
-      "discriminator": [
-        67,
-        36,
-        143,
-        118,
-        36,
-        164,
-        92,
-        217
-      ],
+      "discriminator": [67, 36, 143, 118, 36, 164, 92, 217],
       "accounts": [
         {
           "name": "signer",
@@ -215,14 +133,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -263,16 +174,7 @@
         "* `QueuePaused` - If queue is paused",
         "* `InvalidTokenProgram` - If token program doesn't match mint"
       ],
-      "discriminator": [
-        158,
-        10,
-        86,
-        153,
-        67,
-        210,
-        223,
-        6
-      ],
+      "discriminator": [158, 10, 86, 153, 67, 210, 223, 6],
       "accounts": [
         {
           "name": "solver",
@@ -288,9 +190,7 @@
         },
         {
           "name": "share_mint",
-          "docs": [
-            "The vault's share mint"
-          ],
+          "docs": ["The vault's share mint"],
           "writable": true
         },
         {
@@ -301,23 +201,17 @@
         },
         {
           "name": "user_ata",
-          "docs": [
-            "Users's Token associated token account"
-          ],
+          "docs": ["Users's Token associated token account"],
           "writable": true
         },
         {
           "name": "queue_ata",
-          "docs": [
-            "Queues's Token associated token account"
-          ],
+          "docs": ["Queues's Token associated token account"],
           "writable": true
         },
         {
           "name": "vault_ata",
-          "docs": [
-            "Vault's Token associated token account"
-          ],
+          "docs": ["Vault's Token associated token account"],
           "writable": true
         },
         {
@@ -326,9 +220,7 @@
         },
         {
           "name": "queue_shares",
-          "docs": [
-            "The queue's share token 2022 account"
-          ],
+          "docs": ["The queue's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -348,38 +240,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -402,31 +265,23 @@
         },
         {
           "name": "boring_vault_program",
-          "docs": [
-            "The Boring Vault program"
-          ],
+          "docs": ["The Boring Vault program"],
           "address": "5ZRnXG4GsUMLaN7w2DtJV1cgLgcXHmuHCmJ2MxoorWCE"
         },
         {
           "name": "boring_vault_state",
-          "docs": [
-            "The vault state account"
-          ]
+          "docs": ["The vault state account"]
         },
         {
           "name": "boring_vault"
         },
         {
           "name": "vault_asset_data",
-          "docs": [
-            "The vault's asset data for the withdraw mint"
-          ]
+          "docs": ["The vault's asset data for the withdraw mint"]
         },
         {
           "name": "price_feed",
-          "docs": [
-            "Price feed for the withdraw asset"
-          ]
+          "docs": ["Price feed for the withdraw asset"]
         }
       ],
       "args": [
@@ -445,21 +300,17 @@
         "* `ctx` - The context of accounts",
         "* `authority` - The authority address to set"
       ],
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
       "accounts": [
         {
           "name": "signer",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "program",
+          "signer": true,
+          "address": "4yfE2VJQmxmcnUhrb8vdz7H8w313EZ3eJh5DbANBgtmd"
         },
         {
           "name": "config",
@@ -468,14 +319,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -501,16 +345,7 @@
         "* `ctx` - The context of accounts",
         "* `vault_id` - The vault ID"
       ],
-      "discriminator": [
-        211,
-        22,
-        221,
-        251,
-        74,
-        121,
-        193,
-        47
-      ],
+      "discriminator": [211, 22, 221, 251, 74, 121, 193, 47],
       "accounts": [
         {
           "name": "signer",
@@ -547,16 +382,7 @@
         "* `InvalidShareAmount` - If share amount is below minimum",
         "* `InvalidSecondsToDeadline` - If deadline is too short"
       ],
-      "discriminator": [
-        137,
-        95,
-        187,
-        96,
-        250,
-        138,
-        31,
-        182
-      ],
+      "discriminator": [137, 95, 187, 96, 250, 138, 31, 182],
       "accounts": [
         {
           "name": "signer",
@@ -580,38 +406,9 @@
               {
                 "kind": "const",
                 "value": [
-                  98,
-                  111,
-                  114,
-                  105,
-                  110,
-                  103,
-                  45,
-                  113,
-                  117,
-                  101,
-                  117,
-                  101,
-                  45,
-                  117,
-                  115,
-                  101,
-                  114,
-                  45,
-                  119,
-                  105,
-                  116,
-                  104,
-                  100,
-                  114,
-                  97,
-                  119,
-                  45,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
+                  98, 111, 114, 105, 110, 103, 45, 113, 117, 101, 117, 101, 45,
+                  117, 115, 101, 114, 45, 119, 105, 116, 104, 100, 114, 97, 119,
+                  45, 115, 116, 97, 116, 101
                 ]
               },
               {
@@ -637,9 +434,7 @@
         },
         {
           "name": "user_shares",
-          "docs": [
-            "The user's share token 2022 account"
-          ],
+          "docs": ["The user's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -659,47 +454,16 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
         },
         {
           "name": "queue_shares",
-          "docs": [
-            "The queue's share token 2022 account"
-          ],
+          "docs": ["The queue's share token 2022 account"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -719,38 +483,9 @@
             "program": {
               "kind": "const",
               "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89
               ]
             }
           }
@@ -765,28 +500,20 @@
         },
         {
           "name": "boring_vault_program",
-          "docs": [
-            "The Boring Vault program"
-          ],
+          "docs": ["The Boring Vault program"],
           "address": "5ZRnXG4GsUMLaN7w2DtJV1cgLgcXHmuHCmJ2MxoorWCE"
         },
         {
           "name": "boring_vault_state",
-          "docs": [
-            "The vault state account"
-          ]
+          "docs": ["The vault state account"]
         },
         {
           "name": "vault_asset_data",
-          "docs": [
-            "The vault's asset data for the withdraw mint"
-          ]
+          "docs": ["The vault's asset data for the withdraw mint"]
         },
         {
           "name": "price_feed",
-          "docs": [
-            "Price feed for the withdraw asset"
-          ]
+          "docs": ["Price feed for the withdraw asset"]
         }
       ],
       "args": [
@@ -810,16 +537,7 @@
         "* `vault_id` - The vault ID",
         "* `new_solve_authority` - The new solve authority address"
       ],
-      "discriminator": [
-        46,
-        173,
-        39,
-        53,
-        34,
-        224,
-        54,
-        195
-      ],
+      "discriminator": [46, 173, 39, 53, 34, 224, 54, 195],
       "accounts": [
         {
           "name": "signer",
@@ -849,16 +567,7 @@
         "# Arguments",
         "* `ctx` - The context of accounts"
       ],
-      "discriminator": [
-        105,
-        154,
-        55,
-        232,
-        156,
-        127,
-        164,
-        235
-      ],
+      "discriminator": [105, 154, 55, 232, 156, 127, 164, 235],
       "accounts": [
         {
           "name": "signer",
@@ -873,38 +582,9 @@
               {
                 "kind": "const",
                 "value": [
-                  98,
-                  111,
-                  114,
-                  105,
-                  110,
-                  103,
-                  45,
-                  113,
-                  117,
-                  101,
-                  117,
-                  101,
-                  45,
-                  117,
-                  115,
-                  101,
-                  114,
-                  45,
-                  119,
-                  105,
-                  116,
-                  104,
-                  100,
-                  114,
-                  97,
-                  119,
-                  45,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
+                  98, 111, 114, 105, 110, 103, 45, 113, 117, 101, 117, 101, 45,
+                  117, 115, 101, 114, 45, 119, 105, 116, 104, 100, 114, 97, 119,
+                  45, 115, 116, 97, 116, 101
                 ]
               },
               {
@@ -930,16 +610,7 @@
         "* `ctx` - The context of accounts",
         "* `vault_id` - The vault ID"
       ],
-      "discriminator": [
-        169,
-        144,
-        4,
-        38,
-        10,
-        141,
-        188,
-        255
-      ],
+      "discriminator": [169, 144, 4, 38, 10, 141, 188, 255],
       "accounts": [
         {
           "name": "signer",
@@ -972,16 +643,7 @@
         "* `InvalidDiscount` - If maximum_discount is less than minimum_discount",
         "* `MaximumDiscountExceeded` - If maximum_discount exceeds MAXIMUM_DISCOUNT (10%)"
       ],
-      "discriminator": [
-        101,
-        194,
-        137,
-        82,
-        34,
-        107,
-        239,
-        117
-      ],
+      "discriminator": [101, 194, 137, 82, 34, 107, 239, 117],
       "accounts": [
         {
           "name": "signer",
@@ -1018,94 +680,31 @@
   "accounts": [
     {
       "name": "AssetData",
-      "discriminator": [
-        91,
-        115,
-        36,
-        105,
-        141,
-        93,
-        1,
-        135
-      ]
+      "discriminator": [91, 115, 36, 105, 141, 93, 1, 135]
     },
     {
       "name": "BoringVault",
-      "discriminator": [
-        35,
-        84,
-        44,
-        89,
-        150,
-        55,
-        236,
-        25
-      ]
+      "discriminator": [35, 84, 44, 89, 150, 55, 236, 25]
     },
     {
       "name": "ProgramConfig",
-      "discriminator": [
-        196,
-        210,
-        90,
-        231,
-        144,
-        149,
-        140,
-        63
-      ]
+      "discriminator": [196, 210, 90, 231, 144, 149, 140, 63]
     },
     {
       "name": "QueueState",
-      "discriminator": [
-        18,
-        227,
-        150,
-        65,
-        218,
-        214,
-        72,
-        191
-      ]
+      "discriminator": [18, 227, 150, 65, 218, 214, 72, 191]
     },
     {
       "name": "UserWithdrawState",
-      "discriminator": [
-        203,
-        226,
-        117,
-        250,
-        185,
-        251,
-        209,
-        162
-      ]
+      "discriminator": [203, 226, 117, 250, 185, 251, 209, 162]
     },
     {
       "name": "WithdrawAssetData",
-      "discriminator": [
-        222,
-        123,
-        55,
-        75,
-        117,
-        35,
-        221,
-        77
-      ]
+      "discriminator": [222, 123, 55, 75, 117, 35, 221, 77]
     },
     {
       "name": "WithdrawRequest",
-      "discriminator": [
-        186,
-        239,
-        174,
-        191,
-        189,
-        13,
-        47,
-        196
-      ]
+      "discriminator": [186, 239, 174, 191, 189, 13, 47, 196]
     }
   ],
   "errors": [
@@ -1171,36 +770,31 @@
     },
     {
       "code": 6012,
-      "name": "InvalidTokenAccount",
-      "msg": "Invalid token account"
-    },
-    {
-      "code": 6013,
       "name": "DecimalConversionFailed",
       "msg": "Decimal conversion failed"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "RequestDeadlineNotPassed",
       "msg": "Request deadline not passed"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "MaximumMaturityExceeded",
       "msg": "Maximum maturity exceeded"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "MaximumDeadlineExceeded",
       "msg": "Maximum deadline exceeded"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "MaximumDiscountExceeded",
       "msg": "Maximum discount exceeded"
     },
     {
-      "code": 6018,
+      "code": 6017,
       "name": "InvalidAssociatedTokenAccount",
       "msg": "Invalid associated token account"
     }
@@ -1393,16 +987,12 @@
         "fields": [
           {
             "name": "base_asset",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "pubkey"
           },
           {
             "name": "decimals",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "u8"
           },
           {
@@ -1515,9 +1105,7 @@
         "fields": [
           {
             "name": "vault_id",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "u64"
           },
           {
@@ -1534,9 +1122,7 @@
           },
           {
             "name": "share_mint",
-            "docs": [
-              "Immutable after deployment"
-            ],
+            "docs": ["Immutable after deployment"],
             "type": "pubkey"
           },
           {

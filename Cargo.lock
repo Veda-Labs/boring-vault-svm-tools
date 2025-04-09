@@ -733,6 +733,7 @@ dependencies = [
  "eyre",
  "hex",
  "litesvm",
+ "serde_json",
  "solana-account",
  "solana-address-lookup-table-interface",
  "solana-client",

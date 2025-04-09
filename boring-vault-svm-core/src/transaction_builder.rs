@@ -23,19 +23,25 @@ impl TransactionBuilder {
         Self { client }
     }
 
-    pub fn initialize(&self, authority: &Pubkey, signer: &Keypair) -> Result<()> {
+    pub fn initialize(
+        &self,
+        authority: &Pubkey,
+        signer: &Keypair,
+        program_signer: &Keypair,
+    ) -> Result<String> {
         let ix = create_initialize_instruction(authority, &signer.pubkey())?;
 
         // Create the transaction
         let transaction = Transaction::new_signed_with_payer(
             &[ix],
             Some(&signer.pubkey()),
-            &[signer],
+            &[signer, &program_signer],
             self.client.get_latest_blockhash()?,
         );
 
-        self.client.send_and_confirm_transaction(&transaction)?;
-        Ok(())
+        let result = self.client.send_and_confirm_transaction(&transaction)?;
+
+        Ok(result.to_string())
     }
 
     pub fn deploy(
@@ -55,7 +61,7 @@ impl TransactionBuilder {
         performance_fee_bps: Option<u16>,
         withdraw_authority: Option<Pubkey>,
         strategist: Option<Pubkey>,
-    ) -> Result<()> {
+    ) -> Result<String> {
         let ix = create_deploy_instruction(
             &self.client,
             authority,
@@ -82,9 +88,9 @@ impl TransactionBuilder {
             self.client.get_latest_blockhash()?,
         );
 
-        self.client.send_and_confirm_transaction(&transaction)?;
+        let result = self.client.send_and_confirm_transaction(&transaction)?;
 
-        Ok(())
+        Ok(result.to_string())
     }
 
     // TODO Add remaining calls

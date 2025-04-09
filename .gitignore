@@ -2,3 +2,5 @@ target/
 .cargo/
 test-ledger/
 program_bytes/
+program_keypairs/
+.env
