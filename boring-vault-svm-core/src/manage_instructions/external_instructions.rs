@@ -3,7 +3,7 @@ use solana_program::system_program;
 use solana_pubkey::{pubkey, Pubkey};
 
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
-use crate::utils::{get_user_metadata_pda, pdas};
+use crate::utils::{get_obligation, get_user_metadata_pda, pdas};
 
 pub trait ExternalInstruction {
     fn vault_id(&self) -> u64;
@@ -178,8 +178,309 @@ impl ExternalInstruction for KaminoInitUserMetaData {
 
     fn ix_operators(&self) -> Operators {
         let operators = vec![
-            Operator::IngestInstruction(0, 4),
-            Operator::IngestAccount(1),
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoInitObligation {
+    vault_id: u64,
+    sub_account: u8,
+    user_metadata: Pubkey,
+    lending_market: Pubkey,
+    tag: u8,
+    id: u8,
+}
+
+impl KaminoInitObligation {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        user_metadata: Pubkey,
+        lending_market: Pubkey,
+        tag: u8,
+        id: u8,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            user_metadata,
+            lending_market,
+            tag,
+            id,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoInitObligation {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let mut ix_data =
+            hex::decode("fb0ae74c1b0b9f60").expect("Failed to decode hex discriminator"); // init_obligation instruction discriminator
+        ix_data.push(self.tag);
+        ix_data.push(self.id);
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let ix_remaining_accounts = vec![
+            AccountMeta::new(owner, false), // obligation owner
+            AccountMeta::new(owner, false), // fee_payer
+            AccountMeta::new(
+                get_obligation(
+                    self.tag,
+                    self.id,
+                    &owner,
+                    &self.lending_market,
+                    &system_program::ID,
+                    &system_program::ID,
+                    &self.ix_program_id(),
+                ),
+                false,
+            ), // obligation
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new_readonly(system_program::ID, false), // seed_1
+            AccountMeta::new_readonly(system_program::ID, false), // seed_2
+            AccountMeta::new(self.user_metadata, false), // owner user metadata
+            AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
+            AccountMeta::new_readonly(system_program::ID, false), // system program
+            AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id
+        ];
+        ix_remaining_accounts
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestAccount(3),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoInitObligationFarmsForReserve {
+    vault_id: u64,
+    sub_account: u8,
+    obligation: Pubkey,
+    reserve: Pubkey,
+    reserve_farm_state: Pubkey,
+    obligation_farm: Pubkey,
+    lending_market: Pubkey,
+    farms_program: Pubkey,
+    mode: u8,
+}
+
+impl KaminoInitObligationFarmsForReserve {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        obligation: Pubkey,
+        reserve: Pubkey,
+        reserve_farm_state: Pubkey,
+        obligation_farm: Pubkey,
+        lending_market: Pubkey,
+        farms_program: Pubkey,
+        mode: u8,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            obligation,
+            reserve,
+            reserve_farm_state,
+            obligation_farm,
+            lending_market,
+            farms_program,
+            mode,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoInitObligationFarmsForReserve {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let mut ix_data =
+            hex::decode("883f0fbad398a8a4").expect("Failed to decode hex discriminator");
+        ix_data.push(self.mode);
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let lending_market_authority =
+            pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
+        vec![
+            AccountMeta::new(owner, false),                    // obligation owner
+            AccountMeta::new(owner, false),                    // fee_payer
+            AccountMeta::new(self.obligation, false),          // obligation
+            AccountMeta::new(lending_market_authority, false), // lending market authority
+            AccountMeta::new(self.reserve, false),             // reserve
+            AccountMeta::new(self.reserve_farm_state, false),  // reserve farm state
+            AccountMeta::new(self.obligation_farm, false),     // obligation farm
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new_readonly(self.farms_program, false), // farms program
+            AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
+            AccountMeta::new_readonly(system_program::ID, false), // system program
+            AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestAccount(7),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoRefreshReserve {
+    vault_id: u64,
+    sub_account: u8,
+    reserve: Pubkey,
+    lending_market: Pubkey,
+    pyth_oracle: Pubkey,
+    switchboard_price_oracle: Pubkey,
+    switchboard_twap_oracle: Pubkey,
+    scope_prices: Pubkey,
+}
+
+impl KaminoRefreshReserve {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        reserve: Pubkey,
+        lending_market: Pubkey,
+        pyth_oracle: Pubkey,
+        switchboard_price_oracle: Pubkey,
+        switchboard_twap_oracle: Pubkey,
+        scope_prices: Pubkey,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            reserve,
+            lending_market,
+            pyth_oracle,
+            switchboard_price_oracle,
+            switchboard_twap_oracle,
+            scope_prices,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoRefreshReserve {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        hex::decode("02da8aeb4fc91966").expect("Failed to decode hex discriminator")
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        vec![
+            AccountMeta::new(self.reserve, false), // reserve
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new_readonly(self.pyth_oracle, false), // pyth oracle
+            AccountMeta::new_readonly(self.switchboard_price_oracle, false), // switchboard price oracle
+            AccountMeta::new_readonly(self.switchboard_twap_oracle, false), // switchboard twap oracle
+            AccountMeta::new_readonly(self.scope_prices, false),            // scope prices
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoRefreshObligation {
+    vault_id: u64,
+    sub_account: u8,
+    lending_market: Pubkey,
+    obligation: Pubkey,
+}
+
+impl KaminoRefreshObligation {
+    pub fn new(vault_id: u64, sub_account: u8, lending_market: Pubkey, obligation: Pubkey) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            lending_market,
+            obligation,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoRefreshObligation {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        hex::decode("218493e497c04859").expect("Failed to decode hex discriminator")
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        vec![
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new(self.obligation, false),              // obligation
+                                                                   // AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
             Operator::IngestInstructionDataSize,
         ];
 

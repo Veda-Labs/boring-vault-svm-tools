@@ -61,3 +61,30 @@ pub fn get_asset_data_pda(vault_state_pda: Pubkey, mint: Pubkey) -> Pubkey {
 pub fn get_user_metadata_pda(user_pubkey: &Pubkey, program_id: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[b"user_meta", &user_pubkey.to_bytes()], program_id).0
 }
+
+pub fn get_obligation(
+    tag: u8,
+    id: u8,
+    owner: &Pubkey,
+    lending_market: &Pubkey,
+    seed_1: &Pubkey,
+    seed_2: &Pubkey,
+    program_id: &Pubkey,
+) -> Pubkey {
+    Pubkey::find_program_address(
+        &[
+            &[tag],
+            &[id],
+            owner.as_ref(),
+            lending_market.as_ref(),
+            seed_1.as_ref(),
+            seed_2.as_ref(),
+        ],
+        program_id,
+    )
+    .0
+}
+
+pub fn get_lending_market_authority(lending_market: &Pubkey, program_id: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[b"lma", lending_market.as_ref()], program_id).0
+}

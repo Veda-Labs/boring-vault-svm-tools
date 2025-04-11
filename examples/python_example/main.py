@@ -97,16 +97,67 @@ async def main():
         # tx_hash = builder.try_bundle_all(signer_bytes)
         # print(f"Success! Transaction hash: {tx_hash}")
 
-        print("Calling init_user_metadata...")
-        builder.manage_kamino_init_user_metadata(
+        # print("Calling init_user_metadata...")
+        # builder.manage_kamino_init_user_metadata(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        # )
+
+        # print("Calling init_user_metadata...")
+        # builder.manage_kamino_init_obligation(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     user_metadata="F8XyJZBnsgGi43f9M26t43Sf5cQyLkS1QxYvKwAfqXE4",
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     tag=0,
+        #     id=0,
+        # )
+
+        # print("Calling init obligation farms for reserve")
+        # builder.manage_kamino_init_obligation_farms_for_reserve(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+        #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
+        #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        #     mode=0,
+        # )
+
+        print("Refreshing Kamino Reserve")
+        builder.manage_kamino_refresh_reserve(
             signer_bytes=signer_bytes,
             authority_bytes=signer_bytes,  # or None if no authority needed
             vault_id=1,  # your vault ID
             sub_account=0,  # source sub account
+            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+            pyth_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            switchboard_price_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            switchboard_twap_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+            scope_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
+        )
+
+        print("Refreshing obligation")
+        builder.manage_kamino_refresh_obligation(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
         )
 
         print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
+        tx_hash = builder.try_bundle_all(payer_bytes=signer_bytes, extra_program_ids=["KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"])
         print(f"Success! Transaction hash: {tx_hash}")
 
     except Exception as e:
