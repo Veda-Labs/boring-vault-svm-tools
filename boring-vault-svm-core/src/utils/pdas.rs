@@ -57,3 +57,7 @@ pub fn get_asset_data_pda(vault_state_pda: Pubkey, mint: Pubkey) -> Pubkey {
     );
     asset_data_pda
 }
+
+pub fn get_user_metadata_pda(user_pubkey: &Pubkey, program_id: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[b"user_meta", &user_pubkey.to_bytes()], program_id).0
+}

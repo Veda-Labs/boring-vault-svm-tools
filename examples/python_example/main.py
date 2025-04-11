@@ -24,63 +24,89 @@ async def main():
     try:
         # Create builder
         print("Creating builder...")
-        builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
+        # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
+        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
 
         authority_pubkey_str = "DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP"
 
         # Add instructions
-        print("Adding initialize instruction...")
-        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
-        print("Adding deploy instruction...")
-        builder.deploy(
-            authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
+        # print("Adding initialize instruction...")
+        # builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        # print("Adding deploy instruction...")
+        # builder.deploy(
+        #     authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
+        #     signer_bytes=signer_bytes,
+        #     base_asset="So11111111111111111111111111111111111111112",  # wSOL
+        #     name="Test Vault",
+        #     symbol="TV",
+        #     exchange_rate_provider=None,  # Optional
+        #     exchange_rate=1_000_000_000,
+        #     payout_address=None,  # Optional
+        #     allowed_exchange_rate_change_upper_bound=10_100,
+        #     allowed_exchange_rate_change_lower_bound=9_900,
+        #     minimum_update_delay_in_seconds=3_600,
+        #     platform_fee_bps=None,  # Optional
+        #     performance_fee_bps=None,  # Optional
+        #     withdraw_authority=None,  # Optional
+        #     strategist=None  # Optional
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
+
+        # print("Setting up SOL as a deposit asset...")
+        # builder.update_asset_data(
+        #         signer_bytes=signer_bytes,
+        #         vault_id=1,
+        #         mint="11111111111111111111111111111111",
+        #         allow_deposits=True,  # allow_deposits
+        #         allow_withdrawals=True,  # allow_withdrawals
+        #         share_premium_bps=0,     # share_premium_bps
+        #         is_pegged_to_base_asset=True, # is_pegged_to_base_asset
+        #         price_feed="11111111111111111111111111111111",
+        #         inverse_price_feed=False, # inverse_price_feed
+        #         max_staleness=0,    # max_staleness
+        #         min_samples=0,     # min_samples
+        # )
+
+        # print("Depositing SOL...")
+        # builder.deposit_sol(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=1,
+        #     user_pubkey="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
+        #     deposit_amount=100000000, # deposit_amount in lamports
+        #     min_mint_amount=0,          # min_mint_amount
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
+
+        # print("Transferring SOL from sub account 0 to sub account 1")
+        # builder.manage_transfer_sol_between_sub_accounts(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     to_sub_account=1,  # destination sub account
+        #     amount=1000000  # amount in lamports
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
+
+        print("Calling init_user_metadata...")
+        builder.manage_kamino_init_user_metadata(
             signer_bytes=signer_bytes,
-            base_asset="So11111111111111111111111111111111111111112",  # wSOL
-            name="Test Vault",
-            symbol="TV",
-            exchange_rate_provider=None,  # Optional
-            exchange_rate=1_000_000_000,
-            payout_address=None,  # Optional
-            allowed_exchange_rate_change_upper_bound=10_100,
-            allowed_exchange_rate_change_lower_bound=9_900,
-            minimum_update_delay_in_seconds=3_600,
-            platform_fee_bps=None,  # Optional
-            performance_fee_bps=None,  # Optional
-            withdraw_authority=None,  # Optional
-            strategist=None  # Optional
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
         )
 
         print("Sending instructions as one bundle...")
         tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
-
-        print("Setting up SOL as a deposit asset...")
-        builder.update_asset_data(
-                signer_bytes=signer_bytes,
-                vault_id=0,
-                mint="11111111111111111111111111111111",
-                allow_deposits=True,  # allow_deposits
-                allow_withdrawals=True,  # allow_withdrawals
-                share_premium_bps=0,     # share_premium_bps
-                is_pegged_to_base_asset=True, # is_pegged_to_base_asset
-                price_feed="11111111111111111111111111111111",
-                inverse_price_feed=False, # inverse_price_feed
-                max_staleness=0,    # max_staleness
-                min_samples=0,     # min_samples
-        )
-
-        print("Depositing SOL...")
-        builder.deposit_sol(
-            signer_bytes=signer_bytes,
-            vault_id=0,
-            user_pubkey="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
-            deposit_amount=1000000000, # deposit_amount in lamports
-            min_mint_amount=0,          # min_mint_amount
-        )
-
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-
         print(f"Success! Transaction hash: {tx_hash}")
 
     except Exception as e:

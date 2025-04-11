@@ -255,7 +255,7 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "token_program_2022",
+          "name": "token_program",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
         }
       ],
@@ -1359,7 +1359,6 @@
       "accounts": [
         {
           "name": "signer",
-          "writable": true,
           "signer": true
         },
         {
@@ -1407,14 +1406,6 @@
         {
           "name": "token_program_2022",
           "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "share_mint",
@@ -1535,8 +1526,8 @@
     },
     {
       "code": 6007,
-      "name": "MathOverflow",
-      "msg": "Math overflow"
+      "name": "MathError",
+      "msg": "Math error"
     },
     {
       "code": 6008,
@@ -1545,73 +1536,63 @@
     },
     {
       "code": 6009,
-      "name": "InvalidAccounts",
-      "msg": "Invalid Account"
+      "name": "InvalidTokenProgram",
+      "msg": "Invalid token program"
     },
     {
       "code": 6010,
-      "name": "InvalidTokenProgram",
-      "msg": "Invalid Token Program"
+      "name": "InvalidExchangeRateProvider",
+      "msg": "Invalid exchange rate provider"
     },
     {
       "code": 6011,
-      "name": "InvalidExchangeRateProvider",
-      "msg": "Invalid Exchange Rate Provider"
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
     },
     {
       "code": 6012,
-      "name": "InvalidAuthority",
-      "msg": "Invalid Authority"
+      "name": "InvalidPayoutAddress",
+      "msg": "Invalid payout address"
     },
     {
       "code": 6013,
-      "name": "InvalidPayoutAddress",
-      "msg": "Invalid Payout Address"
+      "name": "InvalidAllowedExchangeRateChangeUpperBound",
+      "msg": "Invalid allowed exchange rate change upper bound"
     },
     {
       "code": 6014,
-      "name": "InvalidAllowedExchangeRateChangeUpperBound",
-      "msg": "Invalid Allowed Exchange Rate Change Upper Bound"
+      "name": "InvalidAllowedExchangeRateChangeLowerBound",
+      "msg": "Invalid allowed exchange rate change lower bound"
     },
     {
       "code": 6015,
-      "name": "InvalidAllowedExchangeRateChangeLowerBound",
-      "msg": "Invalid Allowed Exchange Rate Change Lower Bound"
+      "name": "InvalidPlatformFeeBps",
+      "msg": "Invalid platform fee bps"
     },
     {
       "code": 6016,
-      "name": "InvalidPlatformFeeBps",
-      "msg": "Invalid Platform Fee BPS"
+      "name": "InvalidPerformanceFeeBps",
+      "msg": "Invalid performance fee bps"
     },
     {
       "code": 6017,
-      "name": "InvalidPerformanceFeeBps",
-      "msg": "Invalid Performance Fee BPS"
+      "name": "InvalidBaseAsset",
+      "msg": "Invalid base asset"
     },
     {
       "code": 6018,
-      "name": "InvalidDecimals",
-      "msg": "Invalid Decimals"
-    },
-    {
-      "code": 6019,
-      "name": "InvalidBaseAsset",
-      "msg": "Invalid Base Asset"
-    },
-    {
-      "code": 6020,
       "name": "DecimalConversionFailed",
       "msg": "Decimal conversion failed"
     },
     {
-      "code": 6021,
+      "code": 6019,
       "name": "MaximumSharePremiumExceeded",
       "msg": "Maximum share premium exceeded"
     },
     {
-      "code": 6022,
+      "code": 6020,
       "name": "InvalidStrategist",
-      "msg": "Invalid Strategist"
+      "msg": "Invalid strategist"
     }
   ],
   "types": [

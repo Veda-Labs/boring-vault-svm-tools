@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
 use crate::instructions::*;
+use crate::manage_instructions::external_instructions::*;
+use crate::utils::{get_lut_pda, get_vault_pda};
 use anchor_client::solana_sdk::signature::Keypair;
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 
@@ -69,9 +72,14 @@ impl TransactionBuilder {
         let msg_serialized = transaction.message().serialize();
         let signatures = transaction.signatures.len();
 
-        println!("Message size: {}", msg_serialized.len());
-        println!("Signatures size: {}", signatures * 64);
-        println!("Total Size: {}", msg_serialized.len() + signatures * 64);
+        // println!("Message size: {}", msg_serialized.len());
+        // println!("Signatures size: {}", signatures * 64);
+        // println!("Total Size: {}", msg_serialized.len() + signatures * 64);
+        let total_size = msg_serialized.len() + signatures * 64;
+        if total_size > 1232 {
+            println!("TX Might be too large...");
+            println!("Size: {}, Max Size: {}", total_size, 1232);
+        }
         // docs https://solana.com/vi/docs/core/transactions
         // Message size: 559 bytes
         // Header: 65 bytes (32 + 32 + 1)
@@ -89,38 +97,6 @@ impl TransactionBuilder {
 
         Ok(result.to_string())
     }
-
-    // pub fn try_bundle_min(&mut self, payer: Keypair) -> Result<Vec<String>> {
-    //     let mut results = vec![];
-    //     // Add payer to signers if not present
-    //     let payer_pubkey = payer.pubkey();
-    //     if !self.signers.contains_key(&payer.pubkey()) {
-    //         self.signers.insert(payer.pubkey(), payer);
-    //     }
-
-    //     // Convert HashMap values to Vec<&Keypair>
-    //     let signers: Vec<&Keypair> = self.signers.values().collect();
-
-    //     // Create the transaction
-    //     let transaction = Transaction::new_signed_with_payer(
-    //         &self.instructions,
-    //         Some(&payer_pubkey),
-    //         &signers,
-    //         self.client.get_latest_blockhash()?,
-    //     );
-
-    //     results.push(
-    //         self.client
-    //             .send_and_confirm_transaction(&transaction)?
-    //             .to_string(),
-    //     );
-
-    //     // Clear both collections
-    //     self.instructions.clear();
-    //     self.signers.clear();
-
-    //     Ok(results)
-    // }
 
     pub fn initialize(
         &mut self,
@@ -253,6 +229,87 @@ impl TransactionBuilder {
         // Update signers
         if !self.signers.contains_key(&signer.pubkey()) {
             self.signers.insert(signer.pubkey(), signer);
+        }
+
+        Ok(())
+    }
+
+    pub fn transfer_sol_between_sub_accounts(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        to_sub_account: u8,
+        amount: u64,
+    ) -> Result<()> {
+        let eix = TransferSolBetweenSubAccounts::new(vault_id, sub_account, to_sub_account, amount);
+
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn init_user_metadata(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+    ) -> Result<()> {
+        // Add create lut instruction.
+        let vault_pda = get_vault_pda(vault_id, sub_account);
+        let recent_slot = self.client.get_slot()?;
+        println!("here 0");
+        let create_lut_ix = create_lut_instruction(&signer.pubkey(), &vault_pda, recent_slot)?;
+
+        self.instructions.push(create_lut_ix);
+
+        let lut_account = get_lut_pda(&vault_pda, recent_slot);
+
+        let eix = KaminoInitUserMetaData::new(vault_id, sub_account, lut_account);
+
+        println!("here 1");
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+        println!("here 2");
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
         }
 
         Ok(())

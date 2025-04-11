@@ -1,3 +1,4 @@
+use crate::manage_instructions::external_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm;
 use crate::utils::pdas::*;
 use anchor_lang::{AccountDeserialize, ToAccountMetas};
@@ -7,15 +8,16 @@ use solana_address_lookup_table_interface::instruction::create_lookup_table;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::account_meta::AccountMeta;
 use solana_instruction::Instruction;
+use solana_keypair::Keypair;
 use solana_program::system_program;
-use solana_program::sysvar::rent::ID as RENT_ID;
 use solana_pubkey::Pubkey;
+use solana_signer::Signer;
 use solana_transaction::Transaction;
-use spl_associated_token_account::get_associated_token_address;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
-pub fn create_lut_instruction_return(
+pub fn create_lut_instruction(
     signer: &Pubkey,
     authority: &Pubkey,
     recent_slot: u64,
@@ -118,38 +120,63 @@ pub fn create_deploy_instruction(
     Ok(instruction)
 }
 
-pub fn create_manage_instruction(
-    signer: &Pubkey,
-    vault_account: Pubkey,
-    cpi_digest_pda: Pubkey,
-    vault_id: u64,
-    sub_account: u8,
-    ix_program_id: Pubkey,
-    ix_data: Vec<u8>,
-) -> Result<Instruction> {
-    let vault_state_pda = get_vault_state_pda(vault_id);
-    // Derive vault_account metadata pda.
-    let (user_metadata_pda, _) =
-        Pubkey::find_program_address(&[b"user_meta", vault_account.as_ref()], &ix_program_id);
-    let accounts = vec![
-        AccountMeta::new(*signer, true),
+pub fn create_manage_instruction<T: ExternalInstruction>(
+    client: &RpcClient,
+    signer: &Keypair,
+    authority: Option<&Keypair>,
+    eix: T,
+) -> Result<Vec<Instruction>> {
+    let mut instructions = vec![];
+    let (cpi_digest_pda, digest) = get_cpi_digest(
+        client,
+        signer,
+        eix.vault_id(),
+        eix.ix_program_id(),
+        eix.ix_data(),
+        eix.ix_remaining_accounts(),
+        eix.ix_operators(),
+    )?;
+
+    // If the authority pubkey is provided, then we have the ability to setup the CPI digest.
+    // Check if the PDA exists.
+    match client.get_account(&cpi_digest_pda) {
+        Ok(_) => {
+            // The account exists so nothing to do.
+        }
+        Err(_) => {
+            // This is okay if the authority was provided.
+            if let Some(authority) = authority {
+                // Add initialize CPI digest to instructions.
+                instructions.push(create_initialize_cpi_digest_instruction(
+                    &authority.pubkey(),
+                    eix.vault_id(),
+                    cpi_digest_pda,
+                    digest,
+                    eix.ix_operators(),
+                )?);
+            } else {
+                return Err(eyre::eyre!(
+                    "Authority must be provided to initialize CPI digest"
+                ));
+            }
+        }
+    };
+
+    let vault_state_pda = get_vault_state_pda(eix.vault_id());
+    let vault_account = get_vault_pda(eix.vault_id(), eix.sub_account());
+    let mut accounts = vec![
+        AccountMeta::new(signer.pubkey(), true),
         AccountMeta::new(vault_state_pda, false),
         AccountMeta::new(vault_account, false),
         AccountMeta::new_readonly(cpi_digest_pda, false),
-        // Add remaining accounts
-        AccountMeta::new(vault_account, false),
-        AccountMeta::new(vault_account, false),
-        AccountMeta::new(user_metadata_pda, false),
-        AccountMeta::new_readonly(ix_program_id, false),
-        AccountMeta::new_readonly(RENT_ID, false),
-        AccountMeta::new_readonly(system_program::ID, false),
     ];
+    accounts.extend(eix.ix_remaining_accounts());
 
     let args = boring_vault_svm::types::ManageArgs {
-        vault_id,
-        sub_account,
-        ix_program_id,
-        ix_data,
+        vault_id: eix.vault_id(),
+        sub_account: eix.sub_account(),
+        ix_program_id: eix.ix_program_id(),
+        ix_data: eix.ix_data(),
     };
 
     let manage_ix_data = boring_vault_svm::client::args::Manage { args }.data();
@@ -161,7 +188,9 @@ pub fn create_manage_instruction(
         data: manage_ix_data,
     };
 
-    Ok(instruction)
+    instructions.push(instruction);
+
+    Ok(instructions)
 }
 
 pub fn create_update_asset_data_instruction(
@@ -187,12 +216,6 @@ pub fn create_update_asset_data_instruction(
         asset: mint,
         asset_data: asset_data_pda,
     };
-
-    println!("=== PDA Debug ===");
-    println!("vault_state_pda: {}", vault_state_pda);
-    println!("mint: {}", mint);
-    println!("asset_data_pda: {}", asset_data_pda);
-    println!("===============================");
 
     let asset_data = boring_vault_svm::accounts::AssetData {
         allow_deposits,
@@ -234,7 +257,11 @@ pub fn create_deposit_sol_instruction(
     let asset_data_pda = get_asset_data_pda(vault_state_pda, native_mint);
     let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
     let share_mint = get_vault_share_mint(vault_state_pda);
-    let user_share_ata = get_associated_token_address(&user_pubkey, &share_mint);
+    let user_share_ata = get_associated_token_address_with_program_id(
+        &user_pubkey,
+        &share_mint,
+        &TOKEN_2022_PROGRAM_ID,
+    );
     let accounts = boring_vault_svm::client::accounts::DepositSol {
         signer: *signer,
         token_program_2022: TOKEN_2022_PROGRAM_ID,
@@ -247,25 +274,6 @@ pub fn create_deposit_sol_instruction(
         user_shares: user_share_ata,
         price_feed: Pubkey::default(),
     };
-
-    println!("=== PDA Debug ===");
-    println!("vault_state_pda: {}", vault_state_pda);
-    println!("mint: {}", native_mint);
-    println!("asset_data_pda: {}", asset_data_pda);
-    println!("===============================");
-
-    println!("=== Deposit SOL Account Debug ===");
-    println!("signer: {}", signer);
-    println!("token_program_2022: {}", TOKEN_2022_PROGRAM_ID);
-    println!("system_program: {}", system_program::ID);
-    println!("associated_token_program: {}", ASSOCIATED_TOKEN_PROGRAM_ID);
-    println!("boring_vault_state: {}", vault_state_pda);
-    println!("boring_vault: {}", vault_pda);
-    println!("asset_data: {}", asset_data_pda);
-    println!("share_mint: {}", share_mint);
-    println!("user_shares: {}", user_share_ata);
-    println!("price_feed: {}", Pubkey::default());
-    println!("===============================");
 
     let args = boring_vault_svm::types::DepositArgs {
         vault_id,
@@ -286,18 +294,12 @@ pub fn create_deposit_sol_instruction(
 }
 
 pub fn create_initialize_cpi_digest_instruction(
-    client: &RpcClient,
     signer: &Pubkey,
     vault_id: u64,
-    ix_program_id: Pubkey,
-    ix_data: Vec<u8>,
+    cpi_digest_pda: Pubkey,
+    digest: [u8; 32],
     operators: boring_vault_svm::types::Operators,
 ) -> Result<Instruction> {
-    let (cpi_digest_pda, digest) =
-        get_cpi_digest(client, vault_id, ix_program_id, ix_data, operators.clone())?;
-
-    println!("digest pda: {}", cpi_digest_pda);
-
     let vault_state_pda = get_vault_state_pda(vault_id);
     let accounts = vec![
         AccountMeta::new(*signer, true),
@@ -325,14 +327,21 @@ pub fn create_initialize_cpi_digest_instruction(
     Ok(instruction)
 }
 
+// Needs remaining accounts
 fn get_cpi_digest(
     client: &RpcClient,
-    _vault_id: u64,
+    signer: &Keypair,
+    vault_id: u64,
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
+    ix_remaining_accounts: Vec<AccountMeta>,
     operators: boring_vault_svm::types::Operators,
 ) -> Result<(Pubkey, [u8; 32])> {
-    let accounts = vec![AccountMeta::new_readonly(system_program::ID, false)];
+    let mut accounts = boring_vault_svm::client::accounts::ViewCpiDigest {
+        system_program: system_program::ID,
+    }
+    .to_account_metas(None);
+    accounts.extend(ix_remaining_accounts);
 
     let args = boring_vault_svm::types::ViewCpiDigestArgs {
         ix_program_id: ix_program_id,
@@ -344,29 +353,32 @@ fn get_cpi_digest(
 
     let instruction = solana_program::instruction::Instruction {
         program_id: boring_vault_svm::ID,
-        accounts,
+        accounts: accounts.clone(),
         data: view_cpi_digest_ix_data,
     };
 
     // Create the transaction
-    let transaction = Transaction::new_with_payer(&[instruction], None);
+    let transaction = Transaction::new_signed_with_payer(
+        &[instruction],
+        Some(&signer.pubkey()),
+        &[signer],
+        client.get_latest_blockhash()?,
+    );
     let tx_res = client.simulate_transaction(&transaction)?;
 
-    let digest = tx_res.value.return_data.unwrap().data.0;
+    let digest_b64 = tx_res.value.return_data.unwrap().data.0;
 
-    println!("View Cpi Digest called: {:?}", digest);
+    // Convert base64 string to bytes
+    let digest_bytes =
+        base64::Engine::decode(&base64::engine::general_purpose::STANDARD, digest_b64)
+            .expect("Failed to decode base64 digest");
+    let mut digest = [0u8; 32];
+    digest.copy_from_slice(&digest_bytes[..32]);
 
-    todo!()
+    // Get the PDA for this digest
+    let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
 
-    // // Convert the digest to a fixed-size array and validate length
-    // let digest: [u8; 32] = digest
-    //     .try_into()
-    //     .expect("Digest must be exactly 32 bytes long");
-
-    // // Get the PDA for this digest
-    // let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
-
-    // Ok((cpi_digest_pda, digest))
+    Ok((cpi_digest_pda, digest))
 }
 
 // TODO so if you are deploying multiple vaults in a bundle then this logic would be wrong.
