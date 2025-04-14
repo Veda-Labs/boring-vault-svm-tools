@@ -50,11 +50,7 @@ impl TransactionBuilder {
         Ok(())
     }
 
-    pub fn try_bundle_all(
-        &mut self,
-        payer: Keypair,
-        extra_program_ids: Option<Vec<Pubkey>>,
-    ) -> Result<String> {
+    pub fn try_bundle_all(&mut self, payer: Keypair) -> Result<String> {
         // Add payer to signers if not present
         let payer_pubkey = payer.pubkey();
         if !self.signers.contains_key(&payer.pubkey()) {
@@ -65,24 +61,12 @@ impl TransactionBuilder {
         let signers: Vec<&Keypair> = self.signers.values().collect();
 
         // Create the transaction
-        let mut transaction = Transaction::new_signed_with_payer(
+        let transaction = Transaction::new_signed_with_payer(
             &self.instructions,
             Some(&payer_pubkey),
             &signers,
             self.client.get_latest_blockhash()?,
         );
-
-        // Add extra program IDs to the transaction's message accounts
-        println!("Checking if any program ids need to be added");
-        if let Some(program_ids) = extra_program_ids {
-            println!("extra_program_ids is Some, checking...");
-            for program_id in program_ids {
-                if !transaction.message().account_keys.contains(&program_id) {
-                    println!("Adding {}", program_id.to_string());
-                    transaction.message.account_keys.push(program_id);
-                }
-            }
-        }
 
         let msg_serialized = transaction.message().serialize();
         let signatures = transaction.signatures.len();
@@ -284,6 +268,8 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    // TODO all these kamino calls should be bundled into a single tx and abstracted to one python function
+
     pub fn init_user_metadata(
         &mut self,
         signer: Keypair,
@@ -482,6 +468,110 @@ impl TransactionBuilder {
         obligation: Pubkey,
     ) -> Result<()> {
         let eix = KaminoRefreshObligation::new(vault_id, sub_account, lending_market, obligation);
+
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn refresh_obligation_farms_for_reserve(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        obligation: Pubkey,
+        reserve: Pubkey,
+        reserve_farm_state: Pubkey,
+        obligation_farm: Pubkey,
+        lending_market: Pubkey,
+        farms_program: Pubkey,
+        mode: u8,
+    ) -> Result<()> {
+        let eix = KaminoRefreshObligationFarmsForReserve::new(
+            vault_id,
+            sub_account,
+            obligation,
+            reserve,
+            reserve_farm_state,
+            obligation_farm,
+            lending_market,
+            farms_program,
+            mode,
+        );
+
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn kamino_deposit(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        lending_market: Pubkey,
+        obligation: Pubkey,
+        reserve: Pubkey,
+        reserve_liquidity_mint: Pubkey,
+        reserve_liquidity_supply: Pubkey,
+        reserve_collateral_mint: Pubkey,
+        reserve_destination_deposit_collateral: Pubkey,
+        amount: u64,
+    ) -> Result<()> {
+        let eix = KaminoDeposit::new(
+            vault_id,
+            sub_account,
+            lending_market,
+            obligation,
+            reserve,
+            reserve_liquidity_mint,
+            reserve_liquidity_supply,
+            reserve_collateral_mint,
+            reserve_destination_deposit_collateral,
+            amount,
+        );
 
         let ixs = match authority.as_ref() {
             Some(authority) => {

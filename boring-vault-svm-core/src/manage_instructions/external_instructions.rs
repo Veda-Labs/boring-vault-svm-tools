@@ -1,10 +1,12 @@
-use solana_instruction::account_meta::AccountMeta;
-use solana_program::system_program;
-use solana_pubkey::{pubkey, Pubkey};
-
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
-use crate::utils::{get_obligation, get_user_metadata_pda, pdas};
-
+use crate::utils::{discriminator, get_obligation, get_user_metadata_pda, pdas};
+use anchor_lang::prelude::Account;
+use solana_instruction::account_meta::AccountMeta;
+use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
+use solana_pubkey::{pubkey, Pubkey};
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_token::ID as TOKEN_PROGRAM_ID;
+use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 pub trait ExternalInstruction {
     fn vault_id(&self) -> u64;
     fn sub_account(&self) -> u8;
@@ -474,13 +476,202 @@ impl ExternalInstruction for KaminoRefreshObligation {
         vec![
             AccountMeta::new_readonly(self.lending_market, false), // lending market
             AccountMeta::new(self.obligation, false),              // obligation
-                                                                   // AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id
         ]
     }
 
     fn ix_operators(&self) -> Operators {
         let operators = vec![
             Operator::IngestInstruction(0, 8),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoRefreshObligationFarmsForReserve {
+    vault_id: u64,
+    sub_account: u8,
+    obligation: Pubkey,
+    reserve: Pubkey,
+    reserve_farm_state: Pubkey,
+    obligation_farm: Pubkey,
+    lending_market: Pubkey,
+    farms_program: Pubkey,
+    mode: u8,
+}
+
+impl KaminoRefreshObligationFarmsForReserve {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        obligation: Pubkey,
+        reserve: Pubkey,
+        reserve_farm_state: Pubkey,
+        obligation_farm: Pubkey,
+        lending_market: Pubkey,
+        farms_program: Pubkey,
+        mode: u8,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            obligation,
+            reserve,
+            reserve_farm_state,
+            obligation_farm,
+            lending_market,
+            farms_program,
+            mode,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoRefreshObligationFarmsForReserve {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let mut ix_data =
+            hex::decode("8c90fd150a4af803").expect("Failed to decode hex discriminator");
+        ix_data.push(self.mode);
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        println!("vault pda: {}", owner);
+        let lending_market_authority =
+            pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
+        vec![
+            AccountMeta::new(owner, false),                        // crank
+            AccountMeta::new(self.obligation, false),              // obligation
+            AccountMeta::new(lending_market_authority, false),     // lending market authority
+            AccountMeta::new(self.reserve, false),                 // reserve
+            AccountMeta::new(self.reserve_farm_state, false),      // reserve farm state
+            AccountMeta::new(self.obligation_farm, false),         // obligation farm
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new_readonly(self.farms_program, false),  // farms program
+            AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
+            AccountMeta::new_readonly(system_program::ID, false),  // system program
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestAccount(6),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoDeposit {
+    vault_id: u64,
+    sub_account: u8,
+    obligation: Pubkey,
+    lending_market: Pubkey,
+    reserve: Pubkey,
+    reserve_liquidity_mint: Pubkey,
+    reserve_liquidity_supply: Pubkey,
+    reserve_collateral_mint: Pubkey,
+    reserve_destination_deposit_collateral: Pubkey,
+    amount: u64,
+}
+
+impl KaminoDeposit {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        lending_market: Pubkey,
+        obligation: Pubkey,
+        reserve: Pubkey,
+        reserve_liquidity_mint: Pubkey,
+        reserve_liquidity_supply: Pubkey,
+        reserve_collateral_mint: Pubkey,
+        reserve_destination_deposit_collateral: Pubkey,
+        amount: u64,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            obligation,
+            lending_market,
+            reserve,
+            reserve_liquidity_mint,
+            reserve_liquidity_supply,
+            reserve_collateral_mint,
+            reserve_destination_deposit_collateral,
+            amount,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoDeposit {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let discriminator = discriminator::get_anchor_discriminator(
+            "deposit_reserve_liquidity_and_obligation_collateral",
+        );
+        let mut ix_data = discriminator.to_vec();
+        ix_data.extend_from_slice(&self.amount.to_le_bytes());
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let lending_market_authority =
+            pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
+        let vault_mint_ata = get_associated_token_address_with_program_id(
+            &owner,
+            &self.reserve_liquidity_mint,
+            &TOKEN_PROGRAM_ID,
+        );
+        vec![
+            AccountMeta::new(owner, false),                         // owner
+            AccountMeta::new(self.obligation, false),               // obligation
+            AccountMeta::new_readonly(self.lending_market, false),  // lending market
+            AccountMeta::new(lending_market_authority, false),      // lending market authority
+            AccountMeta::new(self.reserve, false),                  // reserve
+            AccountMeta::new(self.reserve_liquidity_mint, false),   // reserve liquidity mint
+            AccountMeta::new(self.reserve_liquidity_supply, false), // reserve liquidity supply
+            AccountMeta::new(self.reserve_collateral_mint, false),  // reserve collateral mint
+            AccountMeta::new(self.reserve_destination_deposit_collateral, false), // reserve destination deposit collateral
+            AccountMeta::new(vault_mint_ata, false), // user source liquidity
+            AccountMeta::new_readonly(self.ix_program_id(), false), // placeholder user destination collateral
+            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // collateral token program
+            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // liquidity token program
+            AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false), // sysvar instruction
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestAccount(2),
+            Operator::IngestAccount(5),
             Operator::IngestInstructionDataSize,
         ];
 

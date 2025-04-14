@@ -169,13 +169,13 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
         AccountMeta::new(vault_state_pda, false),
         AccountMeta::new(vault_account, false),
         AccountMeta::new_readonly(cpi_digest_pda, false),
+        AccountMeta::new_readonly(eix.ix_program_id(), false),
     ];
     accounts.extend(eix.ix_remaining_accounts());
 
     let args = boring_vault_svm::types::ManageArgs {
         vault_id: eix.vault_id(),
         sub_account: eix.sub_account(),
-        ix_program_id: eix.ix_program_id(),
         ix_data: eix.ix_data(),
     };
 
@@ -338,13 +338,12 @@ fn get_cpi_digest(
     operators: boring_vault_svm::types::Operators,
 ) -> Result<(Pubkey, [u8; 32])> {
     let mut accounts = boring_vault_svm::client::accounts::ViewCpiDigest {
-        system_program: system_program::ID,
+        ix_program_id: ix_program_id,
     }
     .to_account_metas(None);
     accounts.extend(ix_remaining_accounts);
 
     let args = boring_vault_svm::types::ViewCpiDigestArgs {
-        ix_program_id: ix_program_id,
         ix_data: ix_data,
         operators: operators,
     };

@@ -156,8 +156,39 @@ async def main():
             obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
         )
 
+        print("Calling refresh obligation farms for reserve")
+        builder.manage_kamino_refresh_obligation_farms_for_reserve(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+            reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
+            obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
+            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+            farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+            mode=0,
+        )
+
+        print("Depositing into Kamino lending...")
+        builder.manage_kamino_deposit(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+            reserve_liquidity_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # JitoSOL
+            reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
+            reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
+            reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
+            amount=1000000,  # amount in lamports (0.001 JitoSOL)
+        )
+
         print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(payer_bytes=signer_bytes, extra_program_ids=["KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"])
+        tx_hash = builder.try_bundle_all(signer_bytes)
         print(f"Success! Transaction hash: {tx_hash}")
 
     except Exception as e:

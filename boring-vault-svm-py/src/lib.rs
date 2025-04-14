@@ -22,23 +22,13 @@ impl TransactionBuilder {
         }
     }
 
-    fn try_bundle_all(
-        &mut self,
-        payer_bytes: &[u8],
-        extra_program_ids: Option<Vec<String>>,
-    ) -> PyResult<String> {
+    fn try_bundle_all(&mut self, payer_bytes: &[u8]) -> PyResult<String> {
         let payer = Keypair::from_bytes(payer_bytes)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
 
-        let extra_program_ids = extra_program_ids.map(|ids| {
-            ids.into_iter()
-                .map(|id| Pubkey::from_str(&id).expect("Invalid program ID"))
-                .collect()
-        });
-
         let tx_hash = self
             .inner
-            .try_bundle_all(payer, extra_program_ids)
+            .try_bundle_all(payer)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(tx_hash)
@@ -457,6 +447,125 @@ impl TransactionBuilder {
                 sub_account,
                 lending_market_pubkey,
                 obligation_pubkey,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn manage_kamino_refresh_obligation_farms_for_reserve(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        obligation: &str,
+        reserve: &str,
+        reserve_farm_state: &str,
+        obligation_farm: &str,
+        lending_market: &str,
+        farms_program: &str,
+        mode: u8,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(
+                Keypair::from_bytes(bytes)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let obligation_pubkey = Pubkey::from_str(obligation)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_pubkey = Pubkey::from_str(reserve)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_farm_state_pubkey = Pubkey::from_str(reserve_farm_state)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let obligation_farm_pubkey = Pubkey::from_str(obligation_farm)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let lending_market_pubkey = Pubkey::from_str(lending_market)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let farms_program_pubkey = Pubkey::from_str(farms_program)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        self.inner
+            .refresh_obligation_farms_for_reserve(
+                signer,
+                authority,
+                vault_id,
+                sub_account,
+                obligation_pubkey,
+                reserve_pubkey,
+                reserve_farm_state_pubkey,
+                obligation_farm_pubkey,
+                lending_market_pubkey,
+                farms_program_pubkey,
+                mode,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn manage_kamino_deposit(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        lending_market: &str,
+        obligation: &str,
+        reserve: &str,
+        reserve_liquidity_mint: &str,
+        reserve_liquidity_supply: &str,
+        reserve_collateral_mint: &str,
+        reserve_destination_deposit_collateral: &str,
+        amount: u64,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(
+                Keypair::from_bytes(bytes)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let lending_market_pubkey = Pubkey::from_str(lending_market)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let obligation_pubkey = Pubkey::from_str(obligation)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_pubkey = Pubkey::from_str(reserve)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_liquidity_mint_pubkey = Pubkey::from_str(reserve_liquidity_mint)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_liquidity_supply_pubkey = Pubkey::from_str(reserve_liquidity_supply)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_collateral_mint_pubkey = Pubkey::from_str(reserve_collateral_mint)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_destination_deposit_collateral_pubkey =
+            Pubkey::from_str(reserve_destination_deposit_collateral)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        self.inner
+            .kamino_deposit(
+                signer,
+                authority,
+                vault_id,
+                sub_account,
+                lending_market_pubkey,
+                obligation_pubkey,
+                reserve_pubkey,
+                reserve_liquidity_mint_pubkey,
+                reserve_liquidity_supply_pubkey,
+                reserve_collateral_mint_pubkey,
+                reserve_destination_deposit_collateral_pubkey,
+                amount,
             )
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 

@@ -823,6 +823,9 @@
         },
         {
           "name": "cpi_digest"
+        },
+        {
+          "name": "ix_program_id"
         }
       ],
       "args": [
@@ -1318,8 +1321,7 @@
       "discriminator": [243, 10, 27, 160, 175, 112, 119, 60],
       "accounts": [
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "name": "ix_program_id"
         }
       ],
       "args": [
@@ -1824,10 +1826,6 @@
             "type": "u8"
           },
           {
-            "name": "ix_program_id",
-            "type": "pubkey"
-          },
-          {
             "name": "ix_data",
             "type": "bytes"
           }
@@ -2035,10 +2033,6 @@
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "ix_program_id",
-            "type": "pubkey"
-          },
           {
             "name": "ix_data",
             "type": "bytes"
