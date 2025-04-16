@@ -8,6 +8,7 @@ use std::str::FromStr;
 // TODO also maybe the tx builder should be more of a class where you add txs to it, then you have 1 call to execute the batch, or maybe execute single?
 // would need logic to break up a lot of actions into multiple batches though
 
+// Example tx using v2 function https://solscan.io/tx/rRzu7CWxPYstBhHkKfTEdEz6fHhkDfdfuCLWKunsiCUmqWYzAhfmbQD7bZNa5FxU6BfjXF4oU8CVaezoZZQZ36t
 #[pyclass]
 struct TransactionBuilder {
     inner: boring_vault_svm_core::transaction_builder::TransactionBuilder,
@@ -510,6 +511,58 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    fn manage_kamino_refresh_price_list(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        oracle_prices: &str,
+        oracle_mapping: &str,
+        oracle_twaps: &str,
+        price_accounts: Vec<String>,
+        tokens: Vec<u16>,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(
+                Keypair::from_bytes(bytes)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let oracle_prices_pubkey = Pubkey::from_str(oracle_prices)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let oracle_mapping_pubkey = Pubkey::from_str(oracle_mapping)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let oracle_twaps_pubkey = Pubkey::from_str(oracle_twaps)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let price_accounts_pubkeys: Vec<Pubkey> = price_accounts
+            .iter()
+            .map(|s| Pubkey::from_str(s).unwrap())
+            .collect();
+
+        self.inner
+            .refresh_price_list(
+                signer,
+                authority,
+                vault_id,
+                sub_account,
+                oracle_prices_pubkey,
+                oracle_mapping_pubkey,
+                oracle_twaps_pubkey,
+                price_accounts_pubkeys,
+                tokens,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
     fn manage_kamino_deposit(
         &mut self,
         signer_bytes: &[u8],
@@ -565,6 +618,77 @@ impl TransactionBuilder {
                 reserve_liquidity_supply_pubkey,
                 reserve_collateral_mint_pubkey,
                 reserve_destination_deposit_collateral_pubkey,
+                amount,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn manage_deposit_solend(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        deposit_mint: &str,
+        reserve_collateral_mint: &str,
+        lending_market: &str,
+        reserve: &str,
+        reserve_liquidity_supply_spl_token_account: &str,
+        lending_market_authority: &str,
+        destination_deposit_reserve_collateral_supply_spl_token_account: &str,
+        pyth_price_oracle: &str,
+        switchboard_price_oracle: &str,
+        amount: u64,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(
+                Keypair::from_bytes(bytes)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        let deposit_mint_pubkey = Pubkey::from_str(deposit_mint)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_collateral_mint_pubkey = Pubkey::from_str(reserve_collateral_mint)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let lending_market_pubkey = Pubkey::from_str(lending_market)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_pubkey = Pubkey::from_str(reserve)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_liquidity_supply_pubkey =
+            Pubkey::from_str(reserve_liquidity_supply_spl_token_account)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let lending_market_authority_pubkey = Pubkey::from_str(lending_market_authority)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let destination_deposit_pubkey =
+            Pubkey::from_str(destination_deposit_reserve_collateral_supply_spl_token_account)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let pyth_oracle_pubkey = Pubkey::from_str(pyth_price_oracle)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let switchboard_oracle_pubkey = Pubkey::from_str(switchboard_price_oracle)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        self.inner
+            .deposit_solend(
+                signer,
+                authority,
+                vault_id,
+                sub_account,
+                deposit_mint_pubkey,
+                reserve_collateral_mint_pubkey,
+                lending_market_pubkey,
+                reserve_pubkey,
+                reserve_liquidity_supply_pubkey,
+                lending_market_authority_pubkey,
+                destination_deposit_pubkey,
+                pyth_oracle_pubkey,
+                switchboard_oracle_pubkey,
                 amount,
             )
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;

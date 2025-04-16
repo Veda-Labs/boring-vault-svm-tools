@@ -2,11 +2,13 @@ use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::{discriminator, get_obligation, get_user_metadata_pda, pdas};
 use anchor_lang::prelude::Account;
 use solana_instruction::account_meta::AccountMeta;
+use solana_program::system_instruction;
 use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 use solana_pubkey::{pubkey, Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::ID as TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
+
 pub trait ExternalInstruction {
     fn vault_id(&self) -> u64;
     fn sub_account(&self) -> u8;
@@ -437,11 +439,98 @@ impl ExternalInstruction for KaminoRefreshReserve {
     }
 }
 
+pub struct KaminoRefreshPriceList {
+    vault_id: u64,
+    sub_account: u8,
+    oracle_prices: Pubkey,
+    oracle_mapping: Pubkey,
+    oracle_twaps: Pubkey,
+    price_accounts: Vec<Pubkey>,
+    tokens: Vec<u16>,
+}
+
+impl KaminoRefreshPriceList {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        oracle_prices: Pubkey,
+        oracle_mapping: Pubkey,
+        oracle_twaps: Pubkey,
+        price_accounts: Vec<Pubkey>,
+        tokens: Vec<u16>,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            oracle_prices,
+            oracle_mapping,
+            oracle_twaps,
+            price_accounts,
+            tokens,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoRefreshPriceList {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let mut ix_data =
+            hex::decode("53bacf83cbfec682").expect("Failed to decode hex discriminator");
+        // First append the length of the vector as 4 bytes
+        ix_data.extend_from_slice(&(self.tokens.len() as u32).to_le_bytes());
+
+        // Then append each token as 2 bytes
+        for token in &self.tokens {
+            ix_data.extend_from_slice(&(*token).to_le_bytes());
+        }
+
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let mut ix_remaining_accounts = vec![
+            AccountMeta::new(self.oracle_prices, false), // oracle prices
+            AccountMeta::new_readonly(self.oracle_mapping, false), // oracle mappings
+            AccountMeta::new(self.oracle_twaps, false),  // oracle twaps
+            AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false), // sysvar instructions
+        ];
+
+        // Append each price account as readonly
+        for price_account in &self.price_accounts {
+            ix_remaining_accounts.push(AccountMeta::new_readonly(*price_account, false));
+        }
+
+        ix_remaining_accounts
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
 pub struct KaminoRefreshObligation {
     vault_id: u64,
     sub_account: u8,
     lending_market: Pubkey,
     obligation: Pubkey,
+    // TODO might need to add an optional vec of reserve accounts
+    // TODO I DO!!!!
 }
 
 impl KaminoRefreshObligation {
@@ -633,7 +722,7 @@ impl ExternalInstruction for KaminoDeposit {
 
     fn ix_data(&self) -> Vec<u8> {
         let discriminator = discriminator::get_anchor_discriminator(
-            "deposit_reserve_liquidity_and_obligation_collateral",
+            "deposit_reserve_liquidity_and_obligation_collateral_v2",
         );
         let mut ix_data = discriminator.to_vec();
         ix_data.extend_from_slice(&self.amount.to_le_bytes());
@@ -664,6 +753,18 @@ impl ExternalInstruction for KaminoDeposit {
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // collateral token program
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // liquidity token program
             AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false), // sysvar instruction
+            AccountMeta::new(
+                pubkey!("GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t"),
+                false,
+            ), // farm accounts obligation farm user state
+            AccountMeta::new(
+                pubkey!("B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P"),
+                false,
+            ), // farms accounts reserve farm state
+            AccountMeta::new_readonly(
+                pubkey!("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr"),
+                false,
+            ), // farms program
         ]
     }
 
@@ -672,6 +773,259 @@ impl ExternalInstruction for KaminoDeposit {
             Operator::IngestInstruction(0, 8),
             Operator::IngestAccount(2),
             Operator::IngestAccount(5),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct SolendInitObligation {
+    vault_id: u64,
+    sub_account: u8,
+    obligation: Pubkey,
+    lending_market: Pubkey,
+}
+
+impl SolendInitObligation {
+    pub fn new(vault_id: u64, sub_account: u8, obligation: Pubkey, lending_market: Pubkey) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            obligation,
+            lending_market,
+        }
+    }
+}
+
+impl ExternalInstruction for SolendInitObligation {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        hex::decode("06").expect("Failed to decode hex discriminator")
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        vec![
+            AccountMeta::new(self.obligation, false), // obligation
+            AccountMeta::new_readonly(self.lending_market, false), // lending market
+            AccountMeta::new(owner, false),           // owner
+            AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
+            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false), // token program
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 1),
+            Operator::IngestAccount(1),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct SolendDepositReserveLiquidityAndObligationCollateral {
+    vault_id: u64,
+    sub_account: u8,
+    deposit_mint: Pubkey,
+    reserve_collateral_mint: Pubkey,
+    reserve: Pubkey,
+    reserve_liquidity_supply_spl_token_account: Pubkey,
+    lending_market: Pubkey,
+    lending_market_authority: Pubkey,
+    destination_deposit_reserve_collateral_supply_spl_token_account: Pubkey,
+    obligation: Pubkey,
+    pyth_price_oracle: Pubkey,
+    switchboard_price_oracle: Pubkey,
+    amount: u64,
+}
+
+impl SolendDepositReserveLiquidityAndObligationCollateral {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        deposit_mint: Pubkey,
+        reserve_collateral_mint: Pubkey,
+        reserve: Pubkey,
+        reserve_liquidity_supply_spl_token_account: Pubkey,
+        lending_market: Pubkey,
+        lending_market_authority: Pubkey,
+        destination_deposit_reserve_collateral_supply_spl_token_account: Pubkey,
+        obligation: Pubkey,
+        pyth_price_oracle: Pubkey,
+        switchboard_price_oracle: Pubkey,
+        amount: u64,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            deposit_mint,
+            reserve_collateral_mint,
+            reserve,
+            reserve_liquidity_supply_spl_token_account,
+            lending_market,
+            lending_market_authority,
+            destination_deposit_reserve_collateral_supply_spl_token_account,
+            obligation,
+            pyth_price_oracle,
+            switchboard_price_oracle,
+            amount,
+        }
+    }
+}
+
+impl ExternalInstruction for SolendDepositReserveLiquidityAndObligationCollateral {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo")
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        // 0e40420f0000000000
+        let mut ix_data = hex::decode("0e").expect("Failed to decode hex discriminator");
+        ix_data.extend_from_slice(&self.amount.to_le_bytes());
+        ix_data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let vault_deposit_ata = get_associated_token_address_with_program_id(
+            &owner,
+            &self.deposit_mint,
+            &TOKEN_PROGRAM_ID,
+        );
+        let vault_share_ata = get_associated_token_address_with_program_id(
+            &owner,
+            &self.reserve_collateral_mint,
+            &TOKEN_PROGRAM_ID,
+        );
+        vec![
+            AccountMeta::new(vault_deposit_ata, false), // where deposit comes from
+            AccountMeta::new(vault_share_ata, false),   // where shares go
+            AccountMeta::new(self.reserve, false),      // reserve
+            AccountMeta::new(self.reserve_liquidity_supply_spl_token_account, false), // reserve_liquidity_supply_spl_token_account
+            AccountMeta::new(self.reserve_collateral_mint, false), // reserve_collateral_mint
+            AccountMeta::new(self.lending_market, false),          // lending market
+            AccountMeta::new(self.lending_market_authority, false), // lending market authority
+            AccountMeta::new(
+                self.destination_deposit_reserve_collateral_supply_spl_token_account,
+                false,
+            ), // destination_deposit_reserve_collateral_supply_spl_token_account
+            AccountMeta::new(self.obligation, false),              // obligation
+            AccountMeta::new(owner, false),                        // owner
+            AccountMeta::new_readonly(self.pyth_price_oracle, false), // pyth price oracle
+            AccountMeta::new_readonly(self.switchboard_price_oracle, false), // switchboard price oracle
+            AccountMeta::new(owner, false), // user transfer authority
+            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false), // token program
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 1),
+            Operator::IngestAccount(1),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct CreateAccountWithSeed {
+    vault_id: u64,
+    sub_account: u8,
+    seed_str: String,
+    lamports: u64,
+    space: u64,
+    owner: Pubkey,
+}
+
+impl CreateAccountWithSeed {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        seed_str: String,
+        lamports: u64,
+        space: u64,
+        owner: Pubkey,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            seed_str,
+            lamports,
+            space,
+            owner,
+        }
+    }
+}
+
+impl ExternalInstruction for CreateAccountWithSeed {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        system_program::ID
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let pda = Pubkey::create_with_seed(&vault_pda, &self.seed_str, &self.owner)
+            .expect("Failed to create account address with seed");
+
+        // Use the system instruction helper to generate the data
+        let ix = system_instruction::create_account_with_seed(
+            &vault_pda,     // from (funding account)
+            &pda,           // to (the account to create)
+            &vault_pda,     // base
+            &self.seed_str, // seed string
+            self.lamports,  // amount of lamports
+            self.space,     // amount of space in bytes
+            &self.owner,    // owner of the created account
+        );
+        ix.data
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let pda = Pubkey::create_with_seed(&vault_pda, &self.seed_str, &self.owner)
+            .expect("Failed to create account address with seed");
+
+        vec![
+            AccountMeta::new(vault_pda, false),
+            AccountMeta::new(pda, false),
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 4),
+            Operator::IngestAccount(0),
             Operator::IngestInstructionDataSize,
         ];
 

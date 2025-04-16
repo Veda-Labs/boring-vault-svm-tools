@@ -1,4 +1,5 @@
 use crate::manage_instructions::external_instructions::ExternalInstruction;
+use crate::manage_instructions::external_instructions::*;
 use crate::utils::bindings::boring_vault_svm;
 use crate::utils::pdas::*;
 use anchor_lang::{AccountDeserialize, ToAccountMetas};
@@ -9,12 +10,16 @@ use solana_client::rpc_client::RpcClient;
 use solana_instruction::account_meta::AccountMeta;
 use solana_instruction::Instruction;
 use solana_keypair::Keypair;
+use solana_program::system_instruction;
 use solana_program::system_program;
-use solana_pubkey::Pubkey;
+use solana_pubkey::{pubkey, Pubkey};
+use solana_sdk::system_instruction::create_account_with_seed;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
+use spl_token::ID as TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
 pub fn create_lut_instruction(
@@ -30,6 +35,47 @@ pub fn create_lut_instruction(
     );
 
     Ok(lookup_table_ix)
+}
+
+pub fn create_account_with_seed_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    sub_account: u8,
+    owning_program_id: &Pubkey,
+) -> Result<Instruction> {
+    let vault_pda = get_vault_pda(vault_id, sub_account);
+    let pda = Pubkey::create_with_seed(
+        &vault_pda,
+        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf",
+        owning_program_id,
+    )?;
+    Ok(system_instruction::create_account_with_seed(
+        signer,                             // from (funding account)
+        &pda,                               // to (the account to create)
+        &vault_pda,                         // base
+        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf", // seed string
+        9938880,                            // amount of lamports to transfer to the created account
+        1300,              // amount of space in bytes to allocate to the created account
+        owning_program_id, // owner of the created account
+    ))
+}
+
+pub fn create_associated_token_account_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    sub_account: u8,
+    mint: &Pubkey,
+    token_program: &Pubkey,
+) -> Result<Instruction> {
+    let vault_pda = get_vault_pda(vault_id, sub_account);
+
+    // Create instruction to make an ATA for the vault_pda
+    Ok(create_associated_token_account(
+        signer,        // payer
+        &vault_pda,    // wallet address that will own the ATA
+        mint,          // token mint
+        token_program, // token program ID
+    ))
 }
 
 pub fn create_initialize_instruction(authority: &Pubkey, signer: &Pubkey) -> Result<Instruction> {
@@ -293,6 +339,114 @@ pub fn create_deposit_sol_instruction(
     Ok(instruction)
 }
 
+// TODO this tx is too big if u send all at once
+pub fn create_deposit_solend_instructions(
+    client: &RpcClient,
+    signer: &Keypair,
+    authority: Option<&Keypair>,
+    vault_id: u64,
+    sub_account: u8,
+    deposit_mint: &Pubkey,
+    reserve_collateral_mint: &Pubkey,
+    lending_market: &Pubkey,
+    reserve: &Pubkey,
+    reserve_liquidity_supply_spl_token_account: &Pubkey,
+    lending_market_authority: &Pubkey,
+    destination_deposit_reserve_collateral_supply_spl_token_account: &Pubkey,
+    pyth_price_oracle: &Pubkey,
+    switchboard_price_oracle: &Pubkey,
+    amount: u64,
+) -> Result<Vec<Instruction>> {
+    let vault_pda = get_vault_pda(vault_id, sub_account);
+
+    let mut instructions = vec![];
+
+    // Init ATA if needed
+    if let Some(ix) = init_associated_token_account_if_needed(
+        client,
+        &signer.pubkey(),
+        vault_id,
+        sub_account,
+        reserve_collateral_mint,
+        &TOKEN_PROGRAM_ID,
+    )? {
+        instructions.push(ix);
+    }
+    // Create account with seed
+    // let eix_0 = CreateAccountWithSeed::new(
+    //     vault_id,
+    //     sub_account,
+    //     "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf".to_string(),
+    //     9938880,
+    //     1300,
+    //     pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"),
+    // );
+    // let ixs = create_manage_instruction(client, signer, authority, eix_0)?;
+    // instructions.extend(ixs);
+
+    // Init obligation.
+    let obligation = Pubkey::create_with_seed(
+        &vault_pda,
+        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf",
+        &pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"),
+    )?;
+    // let eix_1 = SolendInitObligation::new(vault_id, sub_account, obligation, *lending_market);
+    // let ixs = create_manage_instruction(client, signer, authority, eix_1)?;
+    // instructions.extend(ixs);
+
+    // Deposit
+    let eix_2 = SolendDepositReserveLiquidityAndObligationCollateral::new(
+        vault_id,
+        sub_account,
+        *deposit_mint,
+        *reserve_collateral_mint,
+        *reserve,
+        *reserve_liquidity_supply_spl_token_account,
+        *lending_market,
+        *lending_market_authority,
+        *destination_deposit_reserve_collateral_supply_spl_token_account,
+        obligation,
+        *pyth_price_oracle,
+        *switchboard_price_oracle,
+        amount,
+    );
+    let ixs = create_manage_instruction(client, signer, authority, eix_2)?;
+    instructions.extend(ixs);
+
+    Ok(instructions)
+}
+
+pub fn init_associated_token_account_if_needed(
+    client: &RpcClient,
+    signer: &Pubkey,
+    vault_id: u64,
+    sub_account: u8,
+    mint: &Pubkey,
+    token_program: &Pubkey,
+) -> Result<Option<Instruction>> {
+    let vault_pda = get_vault_pda(vault_id, sub_account);
+
+    // Get the ATA address
+    let ata = get_associated_token_address_with_program_id(&vault_pda, mint, token_program);
+
+    // Check if the account exists
+    match client.get_account(&ata) {
+        Ok(_) => {
+            // Account exists, return None
+            Ok(None)
+        }
+        Err(_) => {
+            // Account doesn't exist, create the instruction
+            Ok(Some(create_associated_token_account(
+                signer,        // payer
+                &vault_pda,    // wallet address that will own the ATA
+                mint,          // token mint
+                token_program, // token program ID
+            )))
+        }
+    }
+}
+
 pub fn create_initialize_cpi_digest_instruction(
     signer: &Pubkey,
     vault_id: u64,
@@ -365,7 +519,21 @@ fn get_cpi_digest(
     );
     let tx_res = client.simulate_transaction(&transaction)?;
 
-    let digest_b64 = tx_res.value.return_data.unwrap().data.0;
+    let digest_b64 = tx_res
+        .value
+        .return_data
+        .clone()
+        .ok_or_else(|| {
+            // Only print debug info if we hit the error case
+            println!("=== Transaction Debug Info ===");
+            println!("Transaction Result: {:#?}", tx_res);
+            println!("Transaction Logs: {:#?}", tx_res.value.logs);
+            println!("===============================");
+
+            eyre::eyre!("No return data found in transaction response")
+        })?
+        .data
+        .0;
 
     // Convert base64 string to bytes
     let digest_bytes =

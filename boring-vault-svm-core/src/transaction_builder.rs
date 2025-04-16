@@ -545,6 +545,53 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    pub fn refresh_price_list(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        oracle_prices: Pubkey,
+        oracle_mapping: Pubkey,
+        oracle_twaps: Pubkey,
+        price_accounts: Vec<Pubkey>,
+        tokens: Vec<u16>,
+    ) -> Result<()> {
+        let eix = KaminoRefreshPriceList::new(
+            vault_id,
+            sub_account,
+            oracle_prices,
+            oracle_mapping,
+            oracle_twaps,
+            price_accounts,
+            tokens,
+        );
+
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn kamino_deposit(
         &mut self,
         signer: Keypair,
@@ -580,6 +627,60 @@ impl TransactionBuilder {
             None => create_manage_instruction(&self.client, &signer, None, eix)?,
         };
 
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn deposit_solend(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        deposit_mint: Pubkey,
+        reserve_collateral_mint: Pubkey,
+        lending_market: Pubkey,
+        reserve: Pubkey,
+        reserve_liquidity_supply_spl_token_account: Pubkey,
+        lending_market_authority: Pubkey,
+        destination_deposit_reserve_collateral_supply_spl_token_account: Pubkey,
+        pyth_price_oracle: Pubkey,
+        switchboard_price_oracle: Pubkey,
+        amount: u64,
+    ) -> Result<()> {
+        let ixs = create_deposit_solend_instructions(
+            &self.client,
+            &signer,
+            authority.as_ref(),
+            vault_id,
+            sub_account,
+            &deposit_mint,
+            &reserve_collateral_mint,
+            &lending_market,
+            &reserve,
+            &reserve_liquidity_supply_spl_token_account,
+            &lending_market_authority,
+            &destination_deposit_reserve_collateral_supply_spl_token_account,
+            &pyth_price_oracle,
+            &switchboard_price_oracle,
+            amount,
+        )?;
+
+        // Add all instructions
         for ix in ixs {
             self.instructions.push(ix);
         }

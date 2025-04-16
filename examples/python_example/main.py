@@ -105,14 +105,14 @@ async def main():
         #     sub_account=0,  # source sub account
         # )
 
-        # print("Calling init_user_metadata...")
+        # print("Calling init_user_obligation...")
         # builder.manage_kamino_init_obligation(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
         #     vault_id=1,  # your vault ID
         #     sub_account=0,  # source sub account
-        #     user_metadata="F8XyJZBnsgGi43f9M26t43Sf5cQyLkS1QxYvKwAfqXE4",
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     user_metadata="CXvftRiAuz19jsRWQoLEHz6geWhCnbGE435wKK7Ggrdz",
+        #     lending_market="6WVSwDQXrBZeQVnu6hpnsRZhodaJTZBUaC334SiiBKdb",
         #     tag=0,
         #     id=0,
         # )
@@ -123,13 +123,31 @@ async def main():
         #     authority_bytes=signer_bytes,  # or None if no authority needed
         #     vault_id=1,  # your vault ID
         #     sub_account=0,  # source sub account
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     obligation="781awWryvHWQpBLFzt2bVAbP2au9VmTsNAScDMaTHZFB",
         #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
         #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
         #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
         #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
         #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
         #     mode=0,
+        # )
+
+        # print("Refreshing price list...")
+        # builder.manage_kamino_refresh_price_list(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     oracle_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",  # example oracle prices account
+        #     oracle_mapping="Chpu5ZgfWX5ZzVpUx9Xvv4WPM75Xd7zPJNDPsFnCpLpk",  # example oracle mapping account
+        #     oracle_twaps="GbpsVomudPRRwmqfTmo3MYQVTikPG6QXxqpzJexA1JRb",  # example oracle twaps account
+        #     price_accounts=[
+        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
+        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
+        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
+        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
+        #     ],
+        #     tokens=[51, 0, 51, 52]  
         # )
 
         print("Refreshing Kamino Reserve")
@@ -156,20 +174,20 @@ async def main():
             obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
         )
 
-        print("Calling refresh obligation farms for reserve")
-        builder.manage_kamino_refresh_obligation_farms_for_reserve(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-            reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
-            obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
-            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-            farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
-            mode=0,
-        )
+        # print("Calling refresh obligation farms for reserve")
+        # builder.manage_kamino_refresh_obligation_farms_for_reserve(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+        #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
+        #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        #     mode=0,
+        # )
 
         print("Depositing into Kamino lending...")
         builder.manage_kamino_deposit(
@@ -184,8 +202,27 @@ async def main():
             reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
             reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
             reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
-            amount=1000000,  # amount in lamports (0.001 JitoSOL)
+            amount=100000,  # amount in lamports (0.0001 JitoSOL)
         )
+
+        # Example usage
+        # print("Depositing solend")
+        # builder.manage_deposit_solend(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or authority.keypair().to_bytes() if needed
+        #     vault_id=1,
+        #     sub_account=0,
+        #     deposit_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # SOL mint
+        #     reserve_collateral_mint="6mFgUsvXQTEYrYgowc9pVzYi49XEJA5uHA9gVDURc2pM",
+        #     lending_market="4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtfpks7FatyKvdY",
+        #     reserve="BRsz1xVQMuVLbc4YjLP1FXhEx1LxSYig2nLqRgJEzR9r",
+        #     reserve_liquidity_supply_spl_token_account="2Khz77qDAL4yY1wG6mTLhLnKiN7sDjQCtrFDEEUFPpiB",
+        #     lending_market_authority="DdZR6zRFiUt4S5mg7AV1uKB2z1f1WzcNYCaTEEWPAuby",
+        #     destination_deposit_reserve_collateral_supply_spl_token_account="3GynM9cRtZsZ2s1SyoAuSgTDjx8ANcVZJXZayuWZbMpd",
+        #     pyth_price_oracle="7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE",
+        #     switchboard_price_oracle="nu11111111111111111111111111111111111111111",
+        #     amount=100000  # Amount in lamports
+        # )
 
         print("Sending instructions as one bundle...")
         tx_hash = builder.try_bundle_all(signer_bytes)
