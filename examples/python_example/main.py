@@ -150,29 +150,29 @@ async def main():
         #     tokens=[51, 0, 51, 52]  
         # )
 
-        print("Refreshing Kamino Reserve")
-        builder.manage_kamino_refresh_reserve(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-            pyth_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-            switchboard_price_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-            switchboard_twap_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-            scope_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
-        )
+        # print("Refreshing Kamino Reserve")
+        # builder.manage_kamino_refresh_reserve(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     pyth_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+        #     switchboard_price_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+        #     switchboard_twap_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+        #     scope_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
+        # )
 
-        print("Refreshing obligation")
-        builder.manage_kamino_refresh_obligation(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-        )
+        # print("Refreshing obligation")
+        # builder.manage_kamino_refresh_obligation(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        # )
 
         # print("Calling refresh obligation farms for reserve")
         # builder.manage_kamino_refresh_obligation_farms_for_reserve(
@@ -189,21 +189,21 @@ async def main():
         #     mode=0,
         # )
 
-        print("Depositing into Kamino lending...")
-        builder.manage_kamino_deposit(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-            obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-            reserve_liquidity_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # JitoSOL
-            reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
-            reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
-            reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
-            amount=100000,  # amount in lamports (0.0001 JitoSOL)
-        )
+        # print("Depositing into Kamino lending...")
+        # builder.manage_kamino_deposit(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+        #     reserve_liquidity_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # JitoSOL
+        #     reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
+        #     reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
+        #     reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
+        #     amount=100000,  # amount in lamports (0.0001 JitoSOL)
+        # )
 
         # Example usage
         # print("Depositing solend")
@@ -223,6 +223,45 @@ async def main():
         #     switchboard_price_oracle="nu11111111111111111111111111111111111111111",
         #     amount=100000  # Amount in lamports
         # )
+
+        print("Wrapping SOL (first time)...")
+        builder.manage_wrap_sol(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+            amount=100000  # amount in lamports (0.0001 SOL)
+        )
+
+        print("Unwrapping SOL (first time)...")
+        builder.manage_unwrap_sol(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+        )
+
+
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
+
+        print("Wrapping SOL (second time)...")
+        builder.manage_wrap_sol(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+            amount=100000  # amount in lamports (0.0001 SOL)
+        )
+
+        print("Unwrapping SOL (second time)...")
+        builder.manage_unwrap_sol(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,  # or None if no authority needed
+            vault_id=1,  # your vault ID
+            sub_account=0,  # source sub account
+        )
 
         print("Sending instructions as one bundle...")
         tx_hash = builder.try_bundle_all(signer_bytes)

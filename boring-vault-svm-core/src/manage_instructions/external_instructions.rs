@@ -1,13 +1,11 @@
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::{discriminator, get_obligation, get_user_metadata_pda, pdas};
-use anchor_lang::prelude::Account;
 use solana_instruction::account_meta::AccountMeta;
 use solana_program::system_instruction;
 use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 use solana_pubkey::{pubkey, Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::ID as TOKEN_PROGRAM_ID;
-use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
 pub trait ExternalInstruction {
     fn vault_id(&self) -> u64;
@@ -130,8 +128,6 @@ impl ExternalInstruction for TransferSolBetweenSubAccounts {
         Operators { operators }
     }
 }
-
-// TODO create lut?
 
 pub struct KaminoInitUserMetaData {
     vault_id: u64,
@@ -1032,3 +1028,64 @@ impl ExternalInstruction for CreateAccountWithSeed {
         Operators { operators }
     }
 }
+
+// unwrapping
+// call close account
+pub struct CloseAccount {
+    vault_id: u64,
+    sub_account: u8,
+    account: Pubkey,
+    token_program: Pubkey,
+}
+
+impl CloseAccount {
+    pub fn new(vault_id: u64, sub_account: u8, account: Pubkey, token_program: Pubkey) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            account,
+            token_program,
+        }
+    }
+}
+
+impl ExternalInstruction for CloseAccount {
+    fn vault_id(&self) -> u64 {
+        self.vault_id
+    }
+
+    fn sub_account(&self) -> u8 {
+        self.sub_account
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        self.token_program
+    }
+
+    fn ix_data(&self) -> Vec<u8> {
+        vec![9] // 9 is the discriminator for closing an account.
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
+
+        vec![
+            AccountMeta::new(self.account, false),       // Account to close
+            AccountMeta::new(vault_pda, false),          // destination
+            AccountMeta::new_readonly(vault_pda, false), // owner
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 1),
+            Operator::IngestAccount(1),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+// Minting JitoSOL
+// Redeeming JitoSOL

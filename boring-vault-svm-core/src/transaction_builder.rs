@@ -699,5 +699,73 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    pub fn wrap_sol(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+        amount: u64,
+    ) -> Result<()> {
+        let ixs = create_wrap_sol_instructions(
+            &self.client,
+            &signer,
+            authority.as_ref(),
+            vault_id,
+            sub_account,
+            amount,
+        )?;
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn unwrap_sol(
+        &mut self,
+        signer: Keypair,
+        authority: Option<Keypair>,
+        vault_id: u64,
+        sub_account: u8,
+    ) -> Result<()> {
+        let ixs = create_unwrap_sol_instructions(
+            &self.client,
+            &signer,
+            authority.as_ref(),
+            vault_id,
+            sub_account,
+        )?;
+
+        for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+
+        if let Some(authority) = authority {
+            if !self.signers.contains_key(&authority.pubkey()) {
+                self.signers.insert(authority.pubkey(), authority);
+            }
+        }
+
+        Ok(())
+    }
+
     // TODO Add remaining calls
 }
