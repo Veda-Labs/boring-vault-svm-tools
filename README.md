@@ -1,8 +1,18 @@
 # Python Example
 
-This example demonstrates how to use the boring-vault-svm-py Rust bindings in Python.
+## Summary
 
-## Setup and Running
+This project provides Python bindings for interacting with Solana's Boring Vault programs, abstracting away the complexity of direct Solana interactions. The goal is to enable Python developers to work with Boring Vaults without needing deep knowledge of Solana's architecture or having to manage Solana-specific dependencies in their projects.
+
+Key features:
+
+- Simple Python interface for Boring Vault operations
+- Handles Solana-specific details internally
+- Minimal Solana dependencies required in user projects
+- Supports both local development and mainnet deployment
+- Provides transaction building and management capabilities
+
+## Local Setup and Running
 
 1. Make edits to the boring-vault-svm-py crate
 
@@ -10,20 +20,7 @@ This example demonstrates how to use the boring-vault-svm-py Rust bindings in Py
    # Edit your Rust code in boring-vault-svm-py/src/
    ```
 
-2. Build the Rust crate
-
-   ```bash
-   cargo build
-   ```
-
-3. Rename the library file(MIGHT NOT BE NEEDED)
-
-   ```bash
-   # For macOS
-   mv target/debug/libboring_vault_svm.dylib target/debug/boring_vault_svm.so
-   ```
-
-4. Set up Python environment and install the package
+2. Set up Python environment and install the package
 
    ```bash
    # Navigate to the python example directory
@@ -37,7 +34,7 @@ This example demonstrates how to use the boring-vault-svm-py Rust bindings in Py
    maturin develop -m ../../boring-vault-svm-py/Cargo.toml
    ```
 
-5. Start the Solana test validator
+3. Start the Solana test validator
 
    ```bash
    # In a new terminal window:
@@ -50,7 +47,35 @@ This example demonstrates how to use the boring-vault-svm-py Rust bindings in Py
    solana-test-validator
    ```
 
-6. Run the example
+4. Run the example
+
+   ```bash
+   # Make sure you're in the python_example directory
+   python main.py
+   ```
+
+## Mainnet Setup and Running
+
+1. Make edits to the boring-vault-svm-py crate
+
+   ```bash
+   # Edit your Rust code in boring-vault-svm-py/src/
+   ```
+
+2. Start venv and install package
+
+   ```bash
+   # Navigate to the python example directory
+   cd python_example
+
+   # Start virtual environment
+   source venv/bin/activate
+
+   # Install the package using maturin
+   maturin develop -m ../../boring-vault-svm-py/Cargo.toml
+   ```
+
+3. Run the example
    ```bash
    # Make sure you're in the python_example directory
    python main.py
