@@ -30,8 +30,8 @@ async def main():
         authority_pubkey_str = "DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP"
 
         # Add instructions
-        # print("Adding initialize instruction...")
-        # builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        print("Adding initialize instruction...")
+        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
         # print("Adding deploy instruction...")
         # builder.deploy(
         #     authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
@@ -51,9 +51,9 @@ async def main():
         #     strategist=None  # Optional
         # )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting up SOL as a deposit asset...")
         # builder.update_asset_data(
@@ -224,48 +224,57 @@ async def main():
         #     amount=100000  # Amount in lamports
         # )
 
-        print("Wrapping SOL (first time)...")
-        builder.manage_wrap_sol(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            amount=100000  # amount in lamports (0.0001 SOL)
-        )
+        # print("Wrapping SOL (first time)...")
+        # builder.manage_wrap_sol(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     amount=100000  # amount in lamports (0.0001 SOL)
+        # )
 
-        print("Unwrapping SOL (first time)...")
-        builder.manage_unwrap_sol(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-        )
+        # print("Unwrapping SOL (first time)...")
+        # builder.manage_unwrap_sol(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        # )
 
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
-        print("Wrapping SOL (second time)...")
-        builder.manage_wrap_sol(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-            amount=100000  # amount in lamports (0.0001 SOL)
-        )
+        # print("Wrapping SOL (second time)...")
+        # builder.manage_wrap_sol(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     amount=100000  # amount in lamports (0.0001 SOL)
+        # )
 
-        print("Unwrapping SOL (second time)...")
-        builder.manage_unwrap_sol(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=1,  # your vault ID
-            sub_account=0,  # source sub account
-        )
+        # print("Unwrapping SOL (second time)...")
+        # builder.manage_unwrap_sol(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Minting JitoSOL...")
+        # builder.manage_mint_jito_sol(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=1,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     amount=100000  # amount in lamports (0.0001 SOL)
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
     except Exception as e:
         print(f"Error: {e}")

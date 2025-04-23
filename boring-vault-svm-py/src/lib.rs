@@ -746,6 +746,32 @@ impl TransactionBuilder {
 
         Ok(())
     }
+
+    fn manage_mint_jito_sol(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        amount: u64,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(
+                Keypair::from_bytes(bytes)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+            ),
+            None => None,
+        };
+
+        self.inner
+            .mint_jito_sol(signer, authority, vault_id, sub_account, amount)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
 }
 
 #[pymodule]

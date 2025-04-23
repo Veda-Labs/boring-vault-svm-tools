@@ -762,6 +762,7 @@ dependencies = [
  "base64 0.22.1",
  "eyre",
  "hex",
+ "rayon",
  "serde_json",
  "solana-account",
  "solana-address-lookup-table-interface",
