@@ -1,6 +1,5 @@
-use crate::manage_instructions::external_instructions::ExternalInstruction;
-use crate::manage_instructions::external_instructions::*;
-use crate::manage_instructions::jito::*;
+use crate::manage_instructions::ExternalInstruction;
+use crate::manage_instructions::{jito::*, solend::*, system::*};
 use crate::utils::bindings::boring_vault_svm;
 use crate::utils::pdas::*;
 use anchor_lang::{AccountDeserialize, ToAccountMetas};

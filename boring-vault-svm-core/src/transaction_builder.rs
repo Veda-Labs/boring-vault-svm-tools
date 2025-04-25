@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::instructions::*;
-use crate::manage_instructions::external_instructions::*;
+use crate::manage_instructions::{kamino::*, system::*};
 use crate::utils::{get_lut_pda, get_vault_pda};
 use anchor_client::solana_sdk::signature::Keypair;
 use eyre::Result;
@@ -784,7 +784,6 @@ impl TransactionBuilder {
             amount,
         )?;
 
-        
         for ix in ixs {
             self.instructions.push(ix);
         }
