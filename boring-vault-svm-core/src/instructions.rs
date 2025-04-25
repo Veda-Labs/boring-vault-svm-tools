@@ -1,5 +1,6 @@
 use crate::manage_instructions::external_instructions::ExternalInstruction;
 use crate::manage_instructions::external_instructions::*;
+use crate::manage_instructions::jito::*;
 use crate::utils::bindings::boring_vault_svm;
 use crate::utils::pdas::*;
 use anchor_lang::{AccountDeserialize, ToAccountMetas};
@@ -14,7 +15,6 @@ use solana_program::system_instruction;
 use solana_program::system_program;
 use solana_pubkey::{pubkey, Pubkey};
 use solana_signer::Signer;
-use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::instruction::create_associated_token_account;
@@ -599,6 +599,23 @@ fn get_cpi_digest(
     let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
 
     Ok((cpi_digest_pda, digest))
+}
+
+
+pub fn create_mint_jito_sol_instructions(
+    client: &RpcClient,
+    signer: &Keypair,
+    authority: Option<&Keypair>,
+    vault_id: u64,
+    sub_account: u8,
+    amount: u64,
+) -> Result<Vec<Instruction>> {
+    let mut instructions = vec![];
+
+    let eix = MintJitoSol::new(vault_id, sub_account, amount);
+    instructions.extend(create_manage_instruction(client, signer, authority, eix)?);
+
+    Ok(instructions)
 }
 
 // TODO so if you are deploying multiple vaults in a bundle then this logic would be wrong.
