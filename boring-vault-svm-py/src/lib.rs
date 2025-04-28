@@ -235,6 +235,38 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    fn set_deposit_sub_account(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        self.inner
+            .set_deposit_sub_account(signer, vault_id, new_sub_account)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn set_withdraw_sub_account(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> PyResult<()> {
+        let signer = Keypair::from_bytes(signer_bytes)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
+        self.inner
+            .set_withdraw_sub_account(signer, vault_id, new_sub_account)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
     fn manage_kamino_init_user_metadata(
         &mut self,
         signer_bytes: &[u8],

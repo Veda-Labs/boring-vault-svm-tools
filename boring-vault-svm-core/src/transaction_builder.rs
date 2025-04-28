@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::instructions::*;
-use crate::manage_instructions::external_instructions::*;
+use crate::manage_instructions::{kamino::*, system::*};
 use crate::utils::{get_lut_pda, get_vault_pda};
 use anchor_client::solana_sdk::signature::Keypair;
 use eyre::Result;
@@ -265,6 +265,52 @@ impl TransactionBuilder {
                 self.signers.insert(authority.pubkey(), authority);
             }
         }
+        Ok(())
+    }
+
+    pub fn set_deposit_sub_account(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> Result<()> {
+        let ix = create_set_deposit_sub_account_instruction(
+            &signer.pubkey(),
+            vault_id,
+            new_sub_account,
+        )?;
+    
+        // Add instruction
+        self.instructions.push(ix);
+    
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+    
+        Ok(())
+    }
+    
+    pub fn set_withdraw_sub_account(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> Result<()> {
+        let ix = create_set_withdraw_sub_account_instruction(
+            &signer.pubkey(),
+            vault_id,
+            new_sub_account,
+        )?;
+    
+        // Add instruction
+        self.instructions.push(ix);
+    
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+    
         Ok(())
     }
 

@@ -1,133 +1,15 @@
+use crate::manage_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
-use crate::utils::{discriminator, get_obligation, get_user_metadata_pda, pdas};
+use crate::utils::{discriminator, pdas};
+
 use solana_instruction::account_meta::AccountMeta;
-use solana_program::system_instruction;
 use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 use solana_pubkey::{pubkey, Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::ID as TOKEN_PROGRAM_ID;
 
-pub trait ExternalInstruction {
-    fn vault_id(&self) -> u64;
-    fn sub_account(&self) -> u8;
-    fn ix_program_id(&self) -> Pubkey;
-    fn ix_data(&self) -> Vec<u8>;
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta>;
-    fn ix_operators(&self) -> Operators;
-}
-
-pub struct TransferSol {
-    vault_id: u64,
-    sub_account: u8,
-    to: Pubkey,
-    amount: u64,
-}
-
-impl TransferSol {
-    pub fn new(vault_id: u64, sub_account: u8, to: Pubkey, amount: u64) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            to,
-            amount,
-        }
-    }
-}
-
-impl ExternalInstruction for TransferSol {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-    fn ix_program_id(&self) -> Pubkey {
-        system_program::ID
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        let mut ix_data = vec![0x02, 0x00, 0x00, 0x00]; // Transfer instruction discriminator
-        ix_data.extend_from_slice(&self.amount.to_le_bytes()); // Write amount as little-endian
-        ix_data
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let from = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let ix_remaining_accounts = vec![
-            AccountMeta::new(from, false),
-            AccountMeta::new(self.to, false),
-            AccountMeta::new_readonly(system_program::ID, false),
-        ];
-        ix_remaining_accounts
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 4),
-            Operator::IngestAccount(1),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-pub struct TransferSolBetweenSubAccounts {
-    vault_id: u64,
-    sub_account: u8,
-    to_sub_account: u8,
-    amount: u64,
-}
-
-impl TransferSolBetweenSubAccounts {
-    pub fn new(vault_id: u64, sub_account: u8, to_sub_account: u8, amount: u64) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            to_sub_account,
-            amount,
-        }
-    }
-}
-
-impl ExternalInstruction for TransferSolBetweenSubAccounts {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-    fn ix_program_id(&self) -> Pubkey {
-        system_program::ID
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        let mut ix_data = vec![0x02, 0x00, 0x00, 0x00]; // Transfer instruction discriminator
-        ix_data.extend_from_slice(&self.amount.to_le_bytes()); // Write amount as little-endian
-        ix_data
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let from = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let to = pdas::get_vault_pda(self.vault_id, self.to_sub_account);
-        let ix_remaining_accounts = vec![
-            AccountMeta::new(from, false),
-            AccountMeta::new(to, false),
-            AccountMeta::new_readonly(system_program::ID, false),
-        ];
-        ix_remaining_accounts
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 4),
-            Operator::IngestAccount(1),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
+const KAMINO_PROGRAM_ID: Pubkey = pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
+const KAMINO_FARMS_PROGRAM_ID: Pubkey = pubkey!("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr");
 
 pub struct KaminoInitUserMetaData {
     vault_id: u64,
@@ -153,7 +35,7 @@ impl ExternalInstruction for KaminoInitUserMetaData {
         self.sub_account
     }
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -168,10 +50,13 @@ impl ExternalInstruction for KaminoInitUserMetaData {
         let ix_remaining_accounts = vec![
             AccountMeta::new(from, false), // owner
             AccountMeta::new(from, false), // fee_payer
-            AccountMeta::new(get_user_metadata_pda(&from, &self.ix_program_id()), false), // user_metadata
+            AccountMeta::new(
+                pdas::get_user_metadata_pda(&from, &self.ix_program_id()),
+                false,
+            ), // user_metadata
             AccountMeta::new_readonly(self.ix_program_id(), false), // referrer_user_metadata
             AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
-            AccountMeta::new_readonly(system_program::ID, false),   // system_program
+            AccountMeta::new_readonly(system_program::ID, false), // system_program
         ];
         ix_remaining_accounts
     }
@@ -223,7 +108,7 @@ impl ExternalInstruction for KaminoInitObligation {
         self.sub_account
     }
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -240,7 +125,7 @@ impl ExternalInstruction for KaminoInitObligation {
             AccountMeta::new(owner, false), // obligation owner
             AccountMeta::new(owner, false), // fee_payer
             AccountMeta::new(
-                get_obligation(
+                pdas::get_obligation(
                     self.tag,
                     self.id,
                     &owner,
@@ -321,7 +206,7 @@ impl ExternalInstruction for KaminoInitObligationFarmsForReserve {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -407,7 +292,7 @@ impl ExternalInstruction for KaminoRefreshReserve {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -477,7 +362,7 @@ impl ExternalInstruction for KaminoRefreshPriceList {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -550,7 +435,7 @@ impl ExternalInstruction for KaminoRefreshObligation {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -622,7 +507,7 @@ impl ExternalInstruction for KaminoRefreshObligationFarmsForReserve {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -713,7 +598,7 @@ impl ExternalInstruction for KaminoDeposit {
     }
 
     fn ix_program_id(&self) -> Pubkey {
-        pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD")
+        KAMINO_PROGRAM_ID
     }
 
     fn ix_data(&self) -> Vec<u8> {
@@ -749,6 +634,8 @@ impl ExternalInstruction for KaminoDeposit {
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // collateral token program
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // liquidity token program
             AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false), // sysvar instruction
+            // TODO: these two accounts look to be hardcoded but are actually user/farm derived accounts,
+            // need to add a function to get these accounts
             AccountMeta::new(
                 pubkey!("GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t"),
                 false,
@@ -757,10 +644,7 @@ impl ExternalInstruction for KaminoDeposit {
                 pubkey!("B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P"),
                 false,
             ), // farms accounts reserve farm state
-            AccountMeta::new_readonly(
-                pubkey!("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr"),
-                false,
-            ), // farms program
+            AccountMeta::new_readonly(KAMINO_FARMS_PROGRAM_ID, false), // farms program
         ]
     }
 
@@ -775,406 +659,3 @@ impl ExternalInstruction for KaminoDeposit {
         Operators { operators }
     }
 }
-
-pub struct SolendInitObligation {
-    vault_id: u64,
-    sub_account: u8,
-    obligation: Pubkey,
-    lending_market: Pubkey,
-}
-
-impl SolendInitObligation {
-    pub fn new(vault_id: u64, sub_account: u8, obligation: Pubkey, lending_market: Pubkey) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            obligation,
-            lending_market,
-        }
-    }
-}
-
-impl ExternalInstruction for SolendInitObligation {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-
-    fn ix_program_id(&self) -> Pubkey {
-        pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo")
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        hex::decode("06").expect("Failed to decode hex discriminator")
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        vec![
-            AccountMeta::new(self.obligation, false), // obligation
-            AccountMeta::new_readonly(self.lending_market, false), // lending market
-            AccountMeta::new(owner, false),           // owner
-            AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
-            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false), // token program
-        ]
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 1),
-            Operator::IngestAccount(1),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-pub struct SolendDepositReserveLiquidityAndObligationCollateral {
-    vault_id: u64,
-    sub_account: u8,
-    deposit_mint: Pubkey,
-    reserve_collateral_mint: Pubkey,
-    reserve: Pubkey,
-    reserve_liquidity_supply_spl_token_account: Pubkey,
-    lending_market: Pubkey,
-    lending_market_authority: Pubkey,
-    destination_deposit_reserve_collateral_supply_spl_token_account: Pubkey,
-    obligation: Pubkey,
-    pyth_price_oracle: Pubkey,
-    switchboard_price_oracle: Pubkey,
-    amount: u64,
-}
-
-impl SolendDepositReserveLiquidityAndObligationCollateral {
-    pub fn new(
-        vault_id: u64,
-        sub_account: u8,
-        deposit_mint: Pubkey,
-        reserve_collateral_mint: Pubkey,
-        reserve: Pubkey,
-        reserve_liquidity_supply_spl_token_account: Pubkey,
-        lending_market: Pubkey,
-        lending_market_authority: Pubkey,
-        destination_deposit_reserve_collateral_supply_spl_token_account: Pubkey,
-        obligation: Pubkey,
-        pyth_price_oracle: Pubkey,
-        switchboard_price_oracle: Pubkey,
-        amount: u64,
-    ) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            deposit_mint,
-            reserve_collateral_mint,
-            reserve,
-            reserve_liquidity_supply_spl_token_account,
-            lending_market,
-            lending_market_authority,
-            destination_deposit_reserve_collateral_supply_spl_token_account,
-            obligation,
-            pyth_price_oracle,
-            switchboard_price_oracle,
-            amount,
-        }
-    }
-}
-
-impl ExternalInstruction for SolendDepositReserveLiquidityAndObligationCollateral {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-
-    fn ix_program_id(&self) -> Pubkey {
-        pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo")
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        // 0e40420f0000000000
-        let mut ix_data = hex::decode("0e").expect("Failed to decode hex discriminator");
-        ix_data.extend_from_slice(&self.amount.to_le_bytes());
-        ix_data
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let vault_deposit_ata = get_associated_token_address_with_program_id(
-            &owner,
-            &self.deposit_mint,
-            &TOKEN_PROGRAM_ID,
-        );
-        let vault_share_ata = get_associated_token_address_with_program_id(
-            &owner,
-            &self.reserve_collateral_mint,
-            &TOKEN_PROGRAM_ID,
-        );
-        vec![
-            AccountMeta::new(vault_deposit_ata, false), // where deposit comes from
-            AccountMeta::new(vault_share_ata, false),   // where shares go
-            AccountMeta::new(self.reserve, false),      // reserve
-            AccountMeta::new(self.reserve_liquidity_supply_spl_token_account, false), // reserve_liquidity_supply_spl_token_account
-            AccountMeta::new(self.reserve_collateral_mint, false), // reserve_collateral_mint
-            AccountMeta::new(self.lending_market, false),          // lending market
-            AccountMeta::new(self.lending_market_authority, false), // lending market authority
-            AccountMeta::new(
-                self.destination_deposit_reserve_collateral_supply_spl_token_account,
-                false,
-            ), // destination_deposit_reserve_collateral_supply_spl_token_account
-            AccountMeta::new(self.obligation, false),              // obligation
-            AccountMeta::new(owner, false),                        // owner
-            AccountMeta::new_readonly(self.pyth_price_oracle, false), // pyth price oracle
-            AccountMeta::new_readonly(self.switchboard_price_oracle, false), // switchboard price oracle
-            AccountMeta::new(owner, false), // user transfer authority
-            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false), // token program
-        ]
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 1),
-            Operator::IngestAccount(1),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-pub struct CreateAccountWithSeed {
-    vault_id: u64,
-    sub_account: u8,
-    seed_str: String,
-    lamports: u64,
-    space: u64,
-    owner: Pubkey,
-}
-
-impl CreateAccountWithSeed {
-    pub fn new(
-        vault_id: u64,
-        sub_account: u8,
-        seed_str: String,
-        lamports: u64,
-        space: u64,
-        owner: Pubkey,
-    ) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            seed_str,
-            lamports,
-            space,
-            owner,
-        }
-    }
-}
-
-impl ExternalInstruction for CreateAccountWithSeed {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-
-    fn ix_program_id(&self) -> Pubkey {
-        system_program::ID
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let pda = Pubkey::create_with_seed(&vault_pda, &self.seed_str, &self.owner)
-            .expect("Failed to create account address with seed");
-
-        // Use the system instruction helper to generate the data
-        let ix = system_instruction::create_account_with_seed(
-            &vault_pda,     // from (funding account)
-            &pda,           // to (the account to create)
-            &vault_pda,     // base
-            &self.seed_str, // seed string
-            self.lamports,  // amount of lamports
-            self.space,     // amount of space in bytes
-            &self.owner,    // owner of the created account
-        );
-        ix.data
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let pda = Pubkey::create_with_seed(&vault_pda, &self.seed_str, &self.owner)
-            .expect("Failed to create account address with seed");
-
-        vec![
-            AccountMeta::new(vault_pda, false),
-            AccountMeta::new(pda, false),
-        ]
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 4),
-            Operator::IngestAccount(0),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-// unwrapping
-// call close account
-pub struct CloseAccount {
-    vault_id: u64,
-    sub_account: u8,
-    account: Pubkey,
-    token_program: Pubkey,
-}
-
-impl CloseAccount {
-    pub fn new(vault_id: u64, sub_account: u8, account: Pubkey, token_program: Pubkey) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            account,
-            token_program,
-        }
-    }
-}
-
-impl ExternalInstruction for CloseAccount {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-
-    fn ix_program_id(&self) -> Pubkey {
-        self.token_program
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        vec![9] // 9 is the discriminator for closing an account.
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
-
-        vec![
-            AccountMeta::new(self.account, false),       // Account to close
-            AccountMeta::new(vault_pda, false),          // destination
-            AccountMeta::new_readonly(vault_pda, false), // owner
-        ]
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 1),
-            Operator::IngestAccount(1),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-// Minting JitoSOL
-pub struct MintJitoSol {
-    vault_id: u64,
-    sub_account: u8,
-    amount: u64,
-}
-
-impl MintJitoSol {
-    pub fn new(vault_id: u64, sub_account: u8, amount: u64) -> Self {
-        Self {
-            vault_id,
-            sub_account,
-            amount,
-        }
-    }
-}
-
-impl ExternalInstruction for MintJitoSol {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
-
-    fn ix_program_id(&self) -> Pubkey {
-        pubkey!("SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy")
-    }
-
-    fn ix_data(&self) -> Vec<u8> {
-        let mut ix_data = vec![14]; // 14 is the discriminator for minting JitoSol.
-        ix_data.extend(self.amount.to_le_bytes());
-
-        ix_data
-    }
-
-    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
-        let vault_pda = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        let mint = pubkey!("J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn");
-        let jito_sol_ata =
-            get_associated_token_address_with_program_id(&vault_pda, &mint, &TOKEN_PROGRAM_ID);
-
-        vec![
-            AccountMeta::new(
-                pubkey!("Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb"),
-                false,
-            ), // Jito (JitoSol) Stake Pool
-            AccountMeta::new_readonly(
-                pubkey!("6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS"),
-                false,
-            ), // stake pool withdraw authority
-            AccountMeta::new(
-                pubkey!("BgKUXdS29YcHCFrPm5M8oLHiTzZaMDjsebggjoaQ6KFL"),
-                false,
-            ), // reserve stake account
-            AccountMeta::new(vault_pda, false),    // depositor
-            AccountMeta::new(jito_sol_ata, false), // user account
-            AccountMeta::new(
-                pubkey!("feeeFLLsam6xZJFc6UQFrHqkvVt4jfmVvi2BRLkUZ4i"),
-                false,
-            ), // fee account
-            AccountMeta::new(jito_sol_ata, false), // referral fee account
-            AccountMeta::new(mint, false),         // token mint
-            AccountMeta::new_readonly(system_program::ID, false), // system program
-            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false), // token program
-        ]
-    }
-
-    fn ix_operators(&self) -> Operators {
-        let operators = vec![
-            Operator::IngestInstruction(0, 1),
-            Operator::IngestAccount(3),
-            Operator::IngestAccount(4),
-            Operator::IngestInstructionDataSize,
-        ];
-
-        Operators { operators }
-    }
-}
-
-// call unstake on pool, then need to call deactivate, then finally withdraw after some days
-
-// TODO Jupiter DEX plan
-// Looks like an anchor program, so ingest discriminator
-// Do not ingest ix data size as that will change betweeen calls
-// Ingest destination token account, source mint, destination mint
-// example txs
-// https://solscan.io/tx/5LqV9oZUitaPieA3pth1JZoyo2XPcSfZawWioEtPUWAqTdRbDqqwy2Mjuw3cLM2mkcXeA4E5yAhFdhuYR9yYPtBz
-// https://solscan.io/tx/27fTvBLo2GuBLLL1jSEGKLqKtcioFwQQG6mNw4vcF54G9iE8FLBU1wQZWNZGkeqRocnf772Qx1DWSkyiQ37ocZx2
-// https://solscan.io/tx/4Cgipr3V7qgxmAFNv4ZqxowgBRxBiUtsGE4QC3gKav7FT3GZQUuB9R6z9KBms25SdvQd6pLEhhxphyaEmDnHMXaU

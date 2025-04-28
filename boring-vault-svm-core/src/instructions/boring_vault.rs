@@ -1,82 +1,24 @@
-use crate::manage_instructions::external_instructions::ExternalInstruction;
-use crate::manage_instructions::external_instructions::*;
-use crate::utils::bindings::boring_vault_svm;
-use crate::utils::pdas::*;
-use anchor_lang::{AccountDeserialize, ToAccountMetas};
-use anchor_lang::{Discriminator, InstructionData};
+use anchor_lang::{
+    system_program, AccountDeserialize, Discriminator, InstructionData, ToAccountMetas,
+};
 use eyre::Result;
-use solana_address_lookup_table_interface::instruction::create_lookup_table;
 use solana_client::rpc_client::RpcClient;
-use solana_instruction::account_meta::AccountMeta;
-use solana_instruction::Instruction;
+use solana_instruction::{AccountMeta, Instruction};
 use solana_keypair::Keypair;
-use solana_program::system_instruction;
-use solana_program::system_program;
-use solana_pubkey::{pubkey, Pubkey};
+use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use solana_system_interface::instruction;
 use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
-use spl_token::ID as TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
-pub fn create_lut_instruction(
-    signer: &Pubkey,
-    authority: &Pubkey,
-    recent_slot: u64,
-) -> Result<Instruction> {
-    // Create the lookup table instruction
-    let (lookup_table_ix, _) = create_lookup_table(
-        *authority, // authority
-        *signer,    // payer
-        recent_slot,
-    );
-
-    Ok(lookup_table_ix)
-}
-
-pub fn create_account_with_seed_instruction(
-    signer: &Pubkey,
-    vault_id: u64,
-    sub_account: u8,
-    owning_program_id: &Pubkey,
-) -> Result<Instruction> {
-    let vault_pda = get_vault_pda(vault_id, sub_account);
-    let pda = Pubkey::create_with_seed(
-        &vault_pda,
-        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf",
-        owning_program_id,
-    )?;
-    Ok(system_instruction::create_account_with_seed(
-        signer,                             // from (funding account)
-        &pda,                               // to (the account to create)
-        &vault_pda,                         // base
-        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf", // seed string
-        9938880,                            // amount of lamports to transfer to the created account
-        1300,              // amount of space in bytes to allocate to the created account
-        owning_program_id, // owner of the created account
-    ))
-}
-
-pub fn create_associated_token_account_instruction(
-    signer: &Pubkey,
-    vault_id: u64,
-    sub_account: u8,
-    mint: &Pubkey,
-    token_program: &Pubkey,
-) -> Result<Instruction> {
-    let vault_pda = get_vault_pda(vault_id, sub_account);
-
-    // Create instruction to make an ATA for the vault_pda
-    Ok(create_associated_token_account(
-        signer,        // payer
-        &vault_pda,    // wallet address that will own the ATA
-        mint,          // token mint
-        token_program, // token program ID
-    ))
-}
+use crate::{
+    manage_instructions::ExternalInstruction,
+    utils::{
+        boring_vault_svm, get_asset_data_pda, get_cpi_digest_pda, get_program_config_pda,
+        get_vault_pda, get_vault_share_mint, get_vault_state_pda,
+    },
+};
 
 pub fn create_initialize_instruction(authority: &Pubkey, signer: &Pubkey) -> Result<Instruction> {
     let accounts = vec![
@@ -316,7 +258,7 @@ pub fn create_deposit_sol_instruction(
         boring_vault_state: vault_state_pda,
         boring_vault: vault_pda,
         asset_data: asset_data_pda,
-        share_mint: share_mint,
+        share_mint,
         user_shares: user_share_ata,
         price_feed: Pubkey::default(),
     };
@@ -339,165 +281,58 @@ pub fn create_deposit_sol_instruction(
     Ok(instruction)
 }
 
-// TODO this tx is too big if u send all at once
-pub fn create_deposit_solend_instructions(
-    client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
-    vault_id: u64,
-    sub_account: u8,
-    deposit_mint: &Pubkey,
-    reserve_collateral_mint: &Pubkey,
-    lending_market: &Pubkey,
-    reserve: &Pubkey,
-    reserve_liquidity_supply_spl_token_account: &Pubkey,
-    lending_market_authority: &Pubkey,
-    destination_deposit_reserve_collateral_supply_spl_token_account: &Pubkey,
-    pyth_price_oracle: &Pubkey,
-    switchboard_price_oracle: &Pubkey,
-    amount: u64,
-) -> Result<Vec<Instruction>> {
-    let vault_pda = get_vault_pda(vault_id, sub_account);
-
-    let mut instructions = vec![];
-
-    // Init ATA if needed
-    if let Some(ix) = init_associated_token_account_if_needed(
-        client,
-        &signer.pubkey(),
-        vault_id,
-        sub_account,
-        reserve_collateral_mint,
-        &TOKEN_PROGRAM_ID,
-    )? {
-        instructions.push(ix);
-    }
-    // Create account with seed
-    // let eix_0 = CreateAccountWithSeed::new(
-    //     vault_id,
-    //     sub_account,
-    //     "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf".to_string(),
-    //     9938880,
-    //     1300,
-    //     pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"),
-    // );
-    // let ixs = create_manage_instruction(client, signer, authority, eix_0)?;
-    // instructions.extend(ixs);
-
-    // Init obligation.
-    let obligation = Pubkey::create_with_seed(
-        &vault_pda,
-        "4UpD2fh7xH3VP9QQaXtsS1YY3bxzWhtf",
-        &pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"),
-    )?;
-    // let eix_1 = SolendInitObligation::new(vault_id, sub_account, obligation, *lending_market);
-    // let ixs = create_manage_instruction(client, signer, authority, eix_1)?;
-    // instructions.extend(ixs);
-
-    // Deposit
-    let eix_2 = SolendDepositReserveLiquidityAndObligationCollateral::new(
-        vault_id,
-        sub_account,
-        *deposit_mint,
-        *reserve_collateral_mint,
-        *reserve,
-        *reserve_liquidity_supply_spl_token_account,
-        *lending_market,
-        *lending_market_authority,
-        *destination_deposit_reserve_collateral_supply_spl_token_account,
-        obligation,
-        *pyth_price_oracle,
-        *switchboard_price_oracle,
-        amount,
-    );
-    let ixs = create_manage_instruction(client, signer, authority, eix_2)?;
-    instructions.extend(ixs);
-
-    Ok(instructions)
-}
-
-pub fn create_wrap_sol_instructions(
-    client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
-    vault_id: u64,
-    sub_account: u8,
-    amount: u64,
-) -> Result<Vec<Instruction>> {
-    let mut instructions = vec![];
-
-    let vault_pda = get_vault_pda(vault_id, sub_account);
-    let w_sol_mint = pubkey!("So11111111111111111111111111111111111111112");
-    let w_sol_ata =
-        get_associated_token_address_with_program_id(&vault_pda, &w_sol_mint, &TOKEN_PROGRAM_ID);
-
-    // Transfer amount to wSOL ata.
-    let eix_0 = TransferSol::new(vault_id, sub_account, w_sol_ata, amount);
-    instructions.extend(create_manage_instruction(client, signer, authority, eix_0)?);
-
-    // Init ata if needed(which wraps it).
-    if let Some(ix) = init_associated_token_account_if_needed(
-        client,
-        &signer.pubkey(),
-        vault_id,
-        sub_account,
-        &w_sol_mint,
-        &TOKEN_PROGRAM_ID,
-    )? {
-        instructions.push(ix);
-    }
-
-    Ok(instructions)
-}
-
-pub fn create_unwrap_sol_instructions(
-    client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
-    vault_id: u64,
-    sub_account: u8,
-) -> Result<Vec<Instruction>> {
-    let mut instructions = vec![];
-    let vault_pda = get_vault_pda(vault_id, sub_account);
-    let w_sol_mint = pubkey!("So11111111111111111111111111111111111111112");
-    let w_sol_ata =
-        get_associated_token_address_with_program_id(&vault_pda, &w_sol_mint, &TOKEN_PROGRAM_ID);
-
-    let eix = CloseAccount::new(vault_id, sub_account, w_sol_ata, TOKEN_PROGRAM_ID);
-    instructions.extend(create_manage_instruction(client, signer, authority, eix)?);
-
-    Ok(instructions)
-}
-
-pub fn init_associated_token_account_if_needed(
-    client: &RpcClient,
+pub fn create_set_deposit_sub_account_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    sub_account: u8,
-    mint: &Pubkey,
-    token_program: &Pubkey,
-) -> Result<Option<Instruction>> {
-    let vault_pda = get_vault_pda(vault_id, sub_account);
+    new_sub_account: u8,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
 
-    // Get the ATA address
-    let ata = get_associated_token_address_with_program_id(&vault_pda, mint, token_program);
+    let accounts = boring_vault_svm::client::accounts::SetDepositSubAccount {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+    };
 
-    // Check if the account exists
-    match client.get_account(&ata) {
-        Ok(_) => {
-            // Account exists, return None
-            Ok(None)
-        }
-        Err(_) => {
-            // Account doesn't exist, create the instruction
-            Ok(Some(create_associated_token_account(
-                signer,        // payer
-                &vault_pda,    // wallet address that will own the ATA
-                mint,          // token mint
-                token_program, // token program ID
-            )))
-        }
-    }
+    let set_deposit_sub_account_ix_data = boring_vault_svm::client::args::SetDepositSubAccount {
+        vault_id,
+        new_sub_account,
+    }.data();
+
+    // Create the instruction
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: set_deposit_sub_account_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_withdraw_sub_account_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    new_sub_account: u8,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = boring_vault_svm::client::accounts::SetWithdrawSubAccount {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+    };
+
+    let set_withdraw_sub_account_ix_data = boring_vault_svm::client::args::SetWithdrawSubAccount {
+        vault_id,
+        new_sub_account,
+    }.data();
+
+    // Create the instruction
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: set_withdraw_sub_account_ix_data,
+    };
+
+    Ok(instruction)
 }
 
 pub fn create_initialize_cpi_digest_instruction(
@@ -544,16 +379,11 @@ fn get_cpi_digest(
     ix_remaining_accounts: Vec<AccountMeta>,
     operators: boring_vault_svm::types::Operators,
 ) -> Result<(Pubkey, [u8; 32])> {
-    let mut accounts = boring_vault_svm::client::accounts::ViewCpiDigest {
-        ix_program_id: ix_program_id,
-    }
-    .to_account_metas(None);
+    let mut accounts =
+        boring_vault_svm::client::accounts::ViewCpiDigest { ix_program_id }.to_account_metas(None);
     accounts.extend(ix_remaining_accounts);
 
-    let args = boring_vault_svm::types::ViewCpiDigestArgs {
-        ix_data: ix_data,
-        operators: operators,
-    };
+    let args = boring_vault_svm::types::ViewCpiDigestArgs { ix_data, operators };
 
     let view_cpi_digest_ix_data = boring_vault_svm::client::args::ViewCpiDigest { args }.data();
 
@@ -601,7 +431,6 @@ fn get_cpi_digest(
     Ok((cpi_digest_pda, digest))
 }
 
-// TODO so if you are deploying multiple vaults in a bundle then this logic would be wrong.
 fn get_vault_id(client: &RpcClient) -> Result<u64> {
     let program_config_pda = get_program_config_pda();
     match client.get_account(&program_config_pda) {
