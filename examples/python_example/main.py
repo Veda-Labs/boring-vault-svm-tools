@@ -30,8 +30,8 @@ async def main():
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
         # Add instructions
-        # print("Adding initialize instruction...")
-        # builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        print("Adding initialize instruction...")
+        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
         # print("Adding deploy instruction...")
         # builder.deploy(
         #     authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
@@ -51,9 +51,9 @@ async def main():
         #     strategist=None  # Optional
         # )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting up SOL as a deposit asset...")
         # builder.update_asset_data(
@@ -75,7 +75,7 @@ async def main():
         #     signer_bytes=signer_bytes,
         #     vault_id=1,
         #     user_pubkey=authority_pubkey_str,
-        #     deposit_amount=10000000, # deposit_amount in lamports
+        #     deposit_amount=100000000, # deposit_amount in lamports
         #     min_mint_amount=0,          # min_mint_amount
         # )
 
@@ -90,7 +90,7 @@ async def main():
         #     vault_id=1,  # your vault ID
         #     sub_account=0,  # source sub account
         #     to_sub_account=1,  # destination sub account
-        #     amount=100000  # amount in lamports
+        #     amount=1000000  # amount in lamports
         # )
 
         # print("Sending instructions as one bundle...")
