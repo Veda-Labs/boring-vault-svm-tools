@@ -19,7 +19,7 @@ def get_program_keypair_secret():
 
 async def main():
     signer_bytes = get_default_keypair_secret()
-    # program_signer_bytes = get_program_keypair_secret()
+    program_signer_bytes = get_program_keypair_secret()
 
     try:
         # Create builder
@@ -73,8 +73,8 @@ async def main():
         # print("Depositing SOL...")
         # builder.deposit_sol(
         #     signer_bytes=signer_bytes,
-        #     vault_id=3,
-        #     user_pubkey="CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2",
+        #     vault_id=1,
+        #     user_pubkey=authority_pubkey_str,
         #     deposit_amount=10000000, # deposit_amount in lamports
         #     min_mint_amount=0,          # min_mint_amount
         # )
@@ -87,7 +87,7 @@ async def main():
         # builder.manage_transfer_sol_between_sub_accounts(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=3,  # your vault ID
+        #     vault_id=1,  # your vault ID
         #     sub_account=0,  # source sub account
         #     to_sub_account=1,  # destination sub account
         #     amount=100000  # amount in lamports
@@ -108,16 +108,16 @@ async def main():
         # tx_hash = builder.try_bundle_all(signer_bytes)
         # print(f"Success! Transaction hash: {tx_hash}")
 
-        print("Setting withdraw sub-account...")
-        builder.set_withdraw_sub_account(
-            signer_bytes=signer_bytes,
-            vault_id=3,
-            new_sub_account=2
-        )
+        # print("Setting withdraw sub-account...")
+        # builder.set_withdraw_sub_account(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_sub_account=2
+        # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Calling init_user_metadata...")
         # builder.manage_kamino_init_user_metadata(
