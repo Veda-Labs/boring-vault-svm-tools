@@ -19,7 +19,7 @@ def get_program_keypair_secret():
 
 async def main():
     signer_bytes = get_default_keypair_secret()
-    program_signer_bytes = get_program_keypair_secret()
+    # program_signer_bytes = get_program_keypair_secret()
 
     try:
         # Create builder
@@ -27,11 +27,11 @@ async def main():
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
         builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
 
-        authority_pubkey_str = "DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP"
+        authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
         # Add instructions
-        print("Adding initialize instruction...")
-        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        # print("Adding initialize instruction...")
+        # builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
         # print("Adding deploy instruction...")
         # builder.deploy(
         #     authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
@@ -51,14 +51,14 @@ async def main():
         #     strategist=None  # Optional
         # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting up SOL as a deposit asset...")
         # builder.update_asset_data(
         #         signer_bytes=signer_bytes,
-        #         vault_id=1,
+        #         vault_id=3,
         #         mint="11111111111111111111111111111111",
         #         allow_deposits=True,  # allow_deposits
         #         allow_withdrawals=True,  # allow_withdrawals
@@ -73,9 +73,9 @@ async def main():
         # print("Depositing SOL...")
         # builder.deposit_sol(
         #     signer_bytes=signer_bytes,
-        #     vault_id=1,
-        #     user_pubkey="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
-        #     deposit_amount=100000000, # deposit_amount in lamports
+        #     vault_id=3,
+        #     user_pubkey="CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2",
+        #     deposit_amount=10000000, # deposit_amount in lamports
         #     min_mint_amount=0,          # min_mint_amount
         # )
 
@@ -87,15 +87,37 @@ async def main():
         # builder.manage_transfer_sol_between_sub_accounts(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
+        #     vault_id=3,  # your vault ID
         #     sub_account=0,  # source sub account
         #     to_sub_account=1,  # destination sub account
-        #     amount=1000000  # amount in lamports
+        #     amount=100000  # amount in lamports
         # )
 
         # print("Sending instructions as one bundle...")
         # tx_hash = builder.try_bundle_all(signer_bytes)
         # print(f"Success! Transaction hash: {tx_hash}")
+
+        # print("Setting deposit sub-account...")
+        # builder.set_deposit_sub_account(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_sub_account=2
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
+
+        print("Setting withdraw sub-account...")
+        builder.set_withdraw_sub_account(
+            signer_bytes=signer_bytes,
+            vault_id=3,
+            new_sub_account=2
+        )
+
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Calling init_user_metadata...")
         # builder.manage_kamino_init_user_metadata(

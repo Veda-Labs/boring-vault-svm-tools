@@ -268,6 +268,52 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    pub fn set_deposit_sub_account(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> Result<()> {
+        let ix = create_set_deposit_sub_account_instruction(
+            &signer.pubkey(),
+            vault_id,
+            new_sub_account,
+        )?;
+    
+        // Add instruction
+        self.instructions.push(ix);
+    
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+    
+        Ok(())
+    }
+    
+    pub fn set_withdraw_sub_account(
+        &mut self,
+        signer: Keypair,
+        vault_id: u64,
+        new_sub_account: u8,
+    ) -> Result<()> {
+        let ix = create_set_withdraw_sub_account_instruction(
+            &signer.pubkey(),
+            vault_id,
+            new_sub_account,
+        )?;
+    
+        // Add instruction
+        self.instructions.push(ix);
+    
+        // Update signers
+        if !self.signers.contains_key(&signer.pubkey()) {
+            self.signers.insert(signer.pubkey(), signer);
+        }
+    
+        Ok(())
+    }
+
     // TODO all these kamino calls should be bundled into a single tx and abstracted to one python function
 
     pub fn init_user_metadata(

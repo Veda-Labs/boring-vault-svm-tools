@@ -338,6 +338,61 @@ pub fn create_deposit_sol_instruction(
     Ok(instruction)
 }
 
+pub fn create_set_deposit_sub_account_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    new_sub_account: u8,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = boring_vault_svm::client::accounts::SetDepositSubAccount {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+    };
+
+    let set_deposit_sub_account_ix_data = boring_vault_svm::client::args::SetDepositSubAccount {
+        vault_id,
+        new_sub_account,
+    }.data();
+
+    // Create the instruction
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: set_deposit_sub_account_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_withdraw_sub_account_instruction(
+    signer: &Pubkey,
+    vault_id: u64,
+    new_sub_account: u8,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = boring_vault_svm::client::accounts::SetWithdrawSubAccount {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+    };
+
+    let set_withdraw_sub_account_ix_data = boring_vault_svm::client::args::SetWithdrawSubAccount {
+        vault_id,
+        new_sub_account,
+    }.data();
+
+    // Create the instruction
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: set_withdraw_sub_account_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+
 // TODO this tx is too big if u send all at once
 pub fn create_deposit_solend_instructions(
     client: &RpcClient,
