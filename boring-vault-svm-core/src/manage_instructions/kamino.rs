@@ -1,12 +1,12 @@
-use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
-use crate::utils::{pdas, discriminator};
 use crate::manage_instructions::ExternalInstruction;
+use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
+use crate::utils::{discriminator, pdas};
 
 use solana_instruction::account_meta::AccountMeta;
+use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 use solana_pubkey::{pubkey, Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::ID as TOKEN_PROGRAM_ID;
-use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 
 const KAMINO_PROGRAM_ID: Pubkey = pubkey!("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
 const KAMINO_FARMS_PROGRAM_ID: Pubkey = pubkey!("FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr");
@@ -50,10 +50,13 @@ impl ExternalInstruction for KaminoInitUserMetaData {
         let ix_remaining_accounts = vec![
             AccountMeta::new(from, false), // owner
             AccountMeta::new(from, false), // fee_payer
-            AccountMeta::new(pdas::get_user_metadata_pda(&from, &self.ix_program_id()), false), // user_metadata
+            AccountMeta::new(
+                pdas::get_user_metadata_pda(&from, &self.ix_program_id()),
+                false,
+            ), // user_metadata
             AccountMeta::new_readonly(self.ix_program_id(), false), // referrer_user_metadata
             AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
-            AccountMeta::new_readonly(system_program::ID, false),   // system_program
+            AccountMeta::new_readonly(system_program::ID, false), // system_program
         ];
         ix_remaining_accounts
     }
@@ -641,10 +644,7 @@ impl ExternalInstruction for KaminoDeposit {
                 pubkey!("B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P"),
                 false,
             ), // farms accounts reserve farm state
-            AccountMeta::new_readonly(
-                KAMINO_FARMS_PROGRAM_ID,
-                false,
-            ), // farms program
+            AccountMeta::new_readonly(KAMINO_FARMS_PROGRAM_ID, false), // farms program
         ]
     }
 

@@ -1,16 +1,16 @@
-pub mod system;
 pub mod jito;
 pub mod kamino;
 pub mod solend;
+pub mod system;
 
 pub use jito::*;
-pub use solend::*;
 pub use kamino::*;
+pub use solend::*;
 pub use system::*;
 
+use crate::utils::bindings::boring_vault_svm::types::Operators;
 use solana_instruction::account_meta::AccountMeta;
 use solana_pubkey::Pubkey;
-use crate::utils::bindings::boring_vault_svm::types::Operators;
 
 pub trait ExternalInstruction {
     fn vault_id(&self) -> u64;
@@ -20,4 +20,3 @@ pub trait ExternalInstruction {
     fn ix_remaining_accounts(&self) -> Vec<AccountMeta>;
     fn ix_operators(&self) -> Operators;
 }
-
