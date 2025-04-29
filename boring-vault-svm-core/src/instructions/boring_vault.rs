@@ -5,10 +5,10 @@ use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
-use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
+use solana_sdk::hash::hash;
 
 use crate::KeypairOrPublickey;
 use crate::{
@@ -120,7 +120,6 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 
     // Call get_cpi_digest with the signer's public key
     let (cpi_digest_pda, digest) = get_cpi_digest(
-        client,
         &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
         eix.ix_program_id(),
@@ -384,66 +383,77 @@ pub fn create_initialize_cpi_digest_instruction(
 
 // Needs remaining accounts
 fn get_cpi_digest(
-    client: &RpcClient,
-    signer: &Pubkey,
+    signer_pubkey: &Pubkey,
     vault_id: u64,
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
     ix_remaining_accounts: Vec<AccountMeta>,
     operators: boring_vault_svm::types::Operators,
 ) -> Result<(Pubkey, [u8; 32])> {
-    let mut accounts =
-        boring_vault_svm::client::accounts::ViewCpiDigest { ix_program_id }.to_account_metas(None);
-    accounts.extend(ix_remaining_accounts);
+    let mut hash_data: Vec<u8> = Vec::new();
 
-    let args = boring_vault_svm::types::ViewCpiDigestArgs { ix_data, operators };
+    // Start hashing with the inner instruction's program ID
+    hash_data.extend(ix_program_id.to_bytes());
 
-    let view_cpi_digest_ix_data = boring_vault_svm::client::args::ViewCpiDigest { args }.data();
+    // --- Construct the combined account list to mimic on-chain context ---
+    // Order: Implicit accounts (from ViewCpiDigest), Payer, Remaining Accounts
+    // Note: This assumes a plausible order. Exact runtime reordering is complex to replicate.
 
-    let instruction = solana_program::instruction::Instruction {
-        program_id: boring_vault_svm::ID,
-        accounts: accounts.clone(),
-        data: view_cpi_digest_ix_data,
+    // 1. Implicit account from ViewCpiDigest context
+    let implicit_ix_program_id_meta = AccountMeta {
+        pubkey: ix_program_id,
+        is_signer: false,
+        is_writable: false,
     };
 
-    // Get the latest blockhash needed for the unsigned transaction
-    let blockhash = client.get_latest_blockhash()?;
+    // 2. Transaction fee payer (signer)
+    let signer_meta = AccountMeta {
+        pubkey: *signer_pubkey,
+        is_signer: true,  // Runtime marks fee payer as signer
+        is_writable: true, // Runtime marks fee payer as writable
+    };
 
-    // Create an *unsigned* transaction, specifying the fee payer's pubkey
-    let mut transaction = Transaction::new_with_payer(
-        &[instruction],
-        Some(signer),
-    );
+    // 3. Combine the accounts
+    let mut combined_accounts = vec![
+        implicit_ix_program_id_meta,
+        signer_meta,
+    ];
+    combined_accounts.extend(ix_remaining_accounts.iter().cloned()); // Use cloned accounts
 
-    // Set the recent blockhash
-    transaction.message.recent_blockhash = blockhash;
+    // --- Apply operators using the combined list ---
+    for operator in &operators.operators {
+        match operator {
+            boring_vault_svm::types::Operator::Noop => {}
+            boring_vault_svm::types::Operator::IngestInstruction(ix_index, length) => {
+                let from = *ix_index as usize;
+                let to = from + (*length as usize);
+                if to > ix_data.len() {
+                     return Err(eyre::eyre!("IngestInstruction bounds [{},{}] out of range for ix_data len {}", from, to, ix_data.len()));
+                }
+                hash_data.extend_from_slice(&ix_data[from..to]);
+            }
+            boring_vault_svm::types::Operator::IngestAccount(account_index) => {
+                let idx = *account_index as usize;
+                if idx >= combined_accounts.len() {
+                     return Err(eyre::eyre!(
+                         "IngestAccount index {} out of bounds. Combined accounts len: {}. Accounts: {:?}",
+                         idx, combined_accounts.len(), combined_accounts.iter().map(|a| a.pubkey).collect::<Vec<_>>()
+                     ));
+                }
+                // Use the combined_accounts list for indexing
+                let account = &combined_accounts[idx];
+                hash_data.extend_from_slice(account.pubkey.as_ref());
+                hash_data.push(account.is_signer as u8);
+                hash_data.push(account.is_writable as u8);
+            }
+            boring_vault_svm::types::Operator::IngestInstructionDataSize => {
+                hash_data.extend_from_slice(&(ix_data.len() as u64).to_le_bytes());
+            }
+        }
+    }
 
-    // Simulate the unsigned transaction.
-    // We rely on the default simulate_transaction behavior where sigVerify is false.
-    let tx_res = client.simulate_transaction(&transaction)?;
-
-    let digest_b64 = tx_res
-        .value
-        .return_data
-        .clone()
-        .ok_or_else(|| {
-            // Only print debug info if we hit the error case
-            println!("=== Transaction Debug Info ===");
-            println!("Transaction Result: {:#?}", tx_res);
-            println!("Transaction Logs: {:#?}", tx_res.value.logs);
-            println!("===============================");
-
-            eyre::eyre!("No return data found in transaction response")
-        })?
-        .data
-        .0;
-
-    // Convert base64 string to bytes
-    let digest_bytes =
-        base64::Engine::decode(&base64::engine::general_purpose::STANDARD, digest_b64)
-            .expect("Failed to decode base64 digest");
-    let mut digest = [0u8; 32];
-    digest.copy_from_slice(&digest_bytes[..32]);
+    // Calculate the final digest
+    let digest = hash(&hash_data).to_bytes();
 
     // Get the PDA for this digest
     let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
