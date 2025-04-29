@@ -3,10 +3,8 @@ use eyre::Result;
 use solana_address_lookup_table_interface::instruction::create_lookup_table;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
-use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_sdk::system_instruction;
-use solana_signer::Signer;
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
@@ -15,6 +13,7 @@ use spl_token::ID as TOKEN_PROGRAM_ID;
 use crate::{
     manage_instructions::{CloseAccount, TransferSol},
     utils::get_vault_pda,
+    KeypairOrPublickey,
 };
 
 use super::create_manage_instruction;
@@ -77,8 +76,8 @@ pub fn create_associated_token_account_instruction(
 
 pub fn create_wrap_sol_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
     amount: u64,
@@ -111,8 +110,8 @@ pub fn create_wrap_sol_instructions(
 
 pub fn create_unwrap_sol_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
 ) -> Result<Vec<Instruction>> {

@@ -6,9 +6,35 @@ pub mod utils;
 use eyre::Result;
 use rayon::prelude::*;
 use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+
+pub enum KeypairOrPublickey {
+    Keypair(Keypair),
+    Publickey(Pubkey),
+}
+
+impl KeypairOrPublickey {
+    pub fn pubkey(&self) -> Pubkey {
+        match self {
+            Self::Keypair(keypair) => keypair.pubkey(),
+            Self::Publickey(pubkey) => *pubkey,
+        }
+    }
+
+    pub fn into_keypair(self) -> Option<Keypair> {
+        match self {
+            Self::Keypair(keypair) => Some(keypair),
+            Self::Publickey(_) => None,
+        }
+    }
+
+    pub fn can_sign(&self) -> bool {
+        matches!(self, Self::Keypair(_))
+    }
+}
 
 /// Generates a vanity keypair with a desired prefix
 ///

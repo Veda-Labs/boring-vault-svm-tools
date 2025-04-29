@@ -4,14 +4,13 @@ use anchor_lang::{
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
-use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
-use solana_signer::Signer;
 use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
+use crate::KeypairOrPublickey;
 use crate::{
     manage_instructions::ExternalInstruction,
     utils::{
@@ -110,14 +109,19 @@ pub fn create_deploy_instruction(
 
 pub fn create_manage_instruction<T: ExternalInstruction>(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     eix: T,
 ) -> Result<Vec<Instruction>> {
     let mut instructions = vec![];
+
+    // Get the signer's public key
+    let signer_pubkey = signer.pubkey();
+
+    // Call get_cpi_digest with the signer's public key
     let (cpi_digest_pda, digest) = get_cpi_digest(
         client,
-        signer,
+        &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
         eix.ix_program_id(),
         eix.ix_data(),
@@ -134,9 +138,16 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
         Err(_) => {
             // This is okay if the authority was provided.
             if let Some(authority) = authority {
+                // Authority needs to be able to sign the initialize CPI digest instruction.
+                // Check if the provided authority can sign.
+                if !authority.can_sign() {
+                    return Err(eyre::eyre!(
+                        "Authority provided for initializing CPI digest must be a Keypair, not just a Pubkey"
+                    ));
+                }
                 // Add initialize CPI digest to instructions.
                 instructions.push(create_initialize_cpi_digest_instruction(
-                    &authority.pubkey(),
+                    &authority.pubkey(), // Use authority's pubkey
                     eix.vault_id(),
                     cpi_digest_pda,
                     digest,
@@ -144,7 +155,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
                 )?);
             } else {
                 return Err(eyre::eyre!(
-                    "Authority must be provided to initialize CPI digest"
+                    "CPI digest account does not exist, and no authority Keypair was provided to initialize it"
                 ));
             }
         }
@@ -153,7 +164,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
     let vault_state_pda = get_vault_state_pda(eix.vault_id());
     let vault_account = get_vault_pda(eix.vault_id(), eix.sub_account());
     let mut accounts = vec![
-        AccountMeta::new(signer.pubkey(), true),
+        AccountMeta::new(signer.pubkey(), true), // Use signer's pubkey here too
         AccountMeta::new(vault_state_pda, false),
         AccountMeta::new(vault_account, false),
         AccountMeta::new_readonly(cpi_digest_pda, false),
@@ -296,7 +307,8 @@ pub fn create_set_deposit_sub_account_instruction(
     let set_deposit_sub_account_ix_data = boring_vault_svm::client::args::SetDepositSubAccount {
         vault_id,
         new_sub_account,
-    }.data();
+    }
+    .data();
 
     // Create the instruction
     let instruction = solana_program::instruction::Instruction {
@@ -323,7 +335,8 @@ pub fn create_set_withdraw_sub_account_instruction(
     let set_withdraw_sub_account_ix_data = boring_vault_svm::client::args::SetWithdrawSubAccount {
         vault_id,
         new_sub_account,
-    }.data();
+    }
+    .data();
 
     // Create the instruction
     let instruction = solana_program::instruction::Instruction {
@@ -372,7 +385,7 @@ pub fn create_initialize_cpi_digest_instruction(
 // Needs remaining accounts
 fn get_cpi_digest(
     client: &RpcClient,
-    signer: &Keypair,
+    signer: &Pubkey,
     vault_id: u64,
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
@@ -393,13 +406,20 @@ fn get_cpi_digest(
         data: view_cpi_digest_ix_data,
     };
 
-    // Create the transaction
-    let transaction = Transaction::new_signed_with_payer(
+    // Get the latest blockhash needed for the unsigned transaction
+    let blockhash = client.get_latest_blockhash()?;
+
+    // Create an *unsigned* transaction, specifying the fee payer's pubkey
+    let mut transaction = Transaction::new_with_payer(
         &[instruction],
-        Some(&signer.pubkey()),
-        &[signer],
-        client.get_latest_blockhash()?,
+        Some(signer),
     );
+
+    // Set the recent blockhash
+    transaction.message.recent_blockhash = blockhash;
+
+    // Simulate the unsigned transaction.
+    // We rely on the default simulate_transaction behavior where sigVerify is false.
     let tx_res = client.simulate_transaction(&transaction)?;
 
     let digest_b64 = tx_res

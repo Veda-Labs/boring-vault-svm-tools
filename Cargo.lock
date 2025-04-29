@@ -760,6 +760,7 @@ dependencies = [
  "anchor-gen",
  "anchor-lang",
  "base64 0.22.1",
+ "bincode",
  "eyre",
  "hex",
  "rayon",

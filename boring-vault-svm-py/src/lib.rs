@@ -1,3 +1,4 @@
+use boring_vault_svm_core::KeypairOrPublickey;
 // use boring_vault_svm_core::transaction_builder;
 use pyo3::prelude::*;
 // use pyo3::wrap_pyfunction;
@@ -43,14 +44,19 @@ impl TransactionBuilder {
     ) -> PyResult<()> {
         let authority = Pubkey::from_str(&authority)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let program_signer = Keypair::from_bytes(program_signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
+        let program_signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(program_signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         self.inner
             .initialize(authority, signer, program_signer)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
         Ok(())
     }
 
@@ -74,8 +80,10 @@ impl TransactionBuilder {
     ) -> PyResult<()> {
         let authority = Pubkey::from_str(&authority)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
         let base_asset = Pubkey::from_str(&base_asset)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
 
@@ -149,8 +157,10 @@ impl TransactionBuilder {
         max_staleness: u64,
         min_samples: u32,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
         let mint = Pubkey::from_str(&mint)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
         let price_feed = Pubkey::from_str(&price_feed)
@@ -183,8 +193,10 @@ impl TransactionBuilder {
         deposit_amount: u64,
         min_mint_amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
         let user_pubkey = Pubkey::from_str(&user_pubkey)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
 
@@ -210,14 +222,16 @@ impl TransactionBuilder {
         to_sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -241,8 +255,10 @@ impl TransactionBuilder {
         vault_id: u64,
         new_sub_account: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         self.inner
             .set_deposit_sub_account(signer, vault_id, new_sub_account)
@@ -257,8 +273,10 @@ impl TransactionBuilder {
         vault_id: u64,
         new_sub_account: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         self.inner
             .set_withdraw_sub_account(signer, vault_id, new_sub_account)
@@ -274,14 +292,16 @@ impl TransactionBuilder {
         vault_id: u64,
         sub_account: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -303,14 +323,16 @@ impl TransactionBuilder {
         tag: u8,
         id: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -349,14 +371,16 @@ impl TransactionBuilder {
         farms_program: &str,
         mode: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -405,14 +429,16 @@ impl TransactionBuilder {
         switchboard_twap_oracle: &str,
         scope_prices: &str,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -456,14 +482,16 @@ impl TransactionBuilder {
         lending_market: &str,
         obligation: &str,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -500,14 +528,16 @@ impl TransactionBuilder {
         farms_program: &str,
         mode: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -555,14 +585,16 @@ impl TransactionBuilder {
         price_accounts: Vec<String>,
         tokens: Vec<u16>,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -610,14 +642,16 @@ impl TransactionBuilder {
         reserve_destination_deposit_collateral: &str,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -674,14 +708,16 @@ impl TransactionBuilder {
         switchboard_price_oracle: &str,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -736,14 +772,16 @@ impl TransactionBuilder {
         sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -761,14 +799,16 @@ impl TransactionBuilder {
         vault_id: u64,
         sub_account: u8,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
@@ -787,14 +827,16 @@ impl TransactionBuilder {
         sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = Keypair::from_bytes(signer_bytes)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(
+            Keypair::from_bytes(signer_bytes)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
+        );
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(
                 Keypair::from_bytes(bytes)
                     .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            )),
             None => None,
         };
 
