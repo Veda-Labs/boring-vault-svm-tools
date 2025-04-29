@@ -9,7 +9,12 @@ use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use solana_transaction::Transaction;
+use solana_sdk::{
+    message::{Message, VersionedMessage},
+    transaction::VersionedTransaction,
+};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use bincode;
 
 pub struct TransactionBuilder {
     client: RpcClient,
@@ -51,50 +56,59 @@ impl TransactionBuilder {
     }
 
     pub fn try_bundle_all(&mut self, payer: Keypair) -> Result<String> {
-        // Add payer to signers if not present
+        // 1. Add payer to signers if not present (needed for compile_... later)
         let payer_pubkey = payer.pubkey();
         if !self.signers.contains_key(&payer.pubkey()) {
-            self.signers.insert(payer.pubkey(), payer);
+            self.signers.insert(payer_pubkey, payer);
         }
 
-        // Convert HashMap values to Vec<&Keypair>
-        let signers: Vec<&Keypair> = self.signers.values().collect();
+        // 2. Compile the transaction using the new method
+        let b64_tx = self.compile_to_versioned_transaction_b64(&payer_pubkey)?;
 
-        // Create the transaction
-        let transaction = Transaction::new_signed_with_payer(
-            &self.instructions,
-            Some(&payer_pubkey),
-            &signers,
-            self.client.get_latest_blockhash()?,
-        );
+        // 3. Decode Base64
+        let serialized_tx = STANDARD.decode(&b64_tx)?;
 
-        let msg_serialized = transaction.message().serialize();
-        let signatures = transaction.signatures.len();
+        // 4. Deserialize the transaction using bincode v1
+        let mut versioned_tx: VersionedTransaction = bincode::deserialize(&serialized_tx)?;
 
-        // println!("Message size: {}", msg_serialized.len());
-        // println!("Signatures size: {}", signatures * 64);
-        // println!("Total Size: {}", msg_serialized.len() + signatures * 64);
-        let total_size = msg_serialized.len() + signatures * 64;
-        if total_size > 1232 {
-            println!("TX Might be too large...");
-            println!("Size: {}, Max Size: {}", total_size, 1232);
-        }
-        // docs https://solana.com/vi/docs/core/transactions
-        // Message size: 559 bytes
-        // Header: 65 bytes (32 + 32 + 1)
-        // Signatures: 128 bytes (2 * 64)
-        // Account metadata: 8 bytes (8 accounts * 1 byte)
-        // Total: 559 + 65 + 128 + 8 = 760 bytes
-        // Max solana tx size is 1232
-        // According to the docs it seems like num signatures * 64 + msesage size serialized msut be less than or equal to 1232
+        let recent_blockhash = self.client.get_latest_blockhash()?;
+        versioned_tx.message.set_recent_blockhash(recent_blockhash);
 
-        let result = self.client.send_and_confirm_transaction(&transaction)?;
+        // 5. Send the deserialized VersionedTransaction
+        let result = self
+            .client
+            .send_and_confirm_transaction(&versioned_tx)?;
 
-        // Clear both collections
+        // 6. Clear builder state
         self.instructions.clear();
         self.signers.clear();
 
+        // 7. Return transaction signature
         Ok(result.to_string())
+    }
+
+    /// Compiles the current instructions into a VersionedTransaction,
+    /// signs it with all available keypairs in the builder, serializes it,
+    /// and returns the Base64 encoded string.
+    /// Does NOT send the transaction or clear the builder state.
+    pub fn compile_to_versioned_transaction_b64(
+        &self,
+        payer_pubkey: &Pubkey,
+    ) -> Result<String> {
+
+        let message = VersionedMessage::Legacy(Message::new(
+            &self.instructions,
+            Some(payer_pubkey),
+        ));
+
+        let signers: Vec<&Keypair> = self.signers.values().collect();
+
+        let tx = VersionedTransaction::try_new(message, &signers)?;
+
+        // Use bincode v1 API for serialization
+        let serialized_tx = bincode::serialize(&tx)?;
+
+        Ok(STANDARD.encode(&serialized_tx))
     }
 
     fn add_signer_if_keypair(&mut self, potential_signer: KeypairOrPublickey) {

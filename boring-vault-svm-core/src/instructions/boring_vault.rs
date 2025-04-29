@@ -4,9 +4,7 @@ use anchor_lang::{
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
-use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
-use solana_signer::Signer;
 use solana_transaction::Transaction;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
@@ -117,21 +115,13 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 ) -> Result<Vec<Instruction>> {
     let mut instructions = vec![];
 
-    // Check if the signer is a Keypair, as get_cpi_digest now requires it
-    let signer_keypair = match signer {
-        KeypairOrPublickey::Keypair(kp) => kp, // If it's a Keypair, use it
-        KeypairOrPublickey::Publickey(_) => { // Use the correct variant name from definition
-             // If it's just a Pubkey, we cannot proceed with digest simulation
-             return Err(eyre::eyre!(
-                 "Cannot simulate CPI digest: Signer must be provided as a Keypair, not just a Pubkey."
-             ));
-         }
-    };
+    // Get the signer's public key
+    let signer_pubkey = signer.pubkey();
 
-    // Call get_cpi_digest with the signer's Keypair
+    // Call get_cpi_digest with the signer's public key
     let (cpi_digest_pda, digest) = get_cpi_digest(
         client,
-        signer_keypair, // <<< Pass the Keypair reference
+        &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
         eix.ix_program_id(),
         eix.ix_data(),
@@ -174,7 +164,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
     let vault_state_pda = get_vault_state_pda(eix.vault_id());
     let vault_account = get_vault_pda(eix.vault_id(), eix.sub_account());
     let mut accounts = vec![
-        AccountMeta::new(signer.pubkey(), true), // Still use signer's pubkey for the actual manage instruction
+        AccountMeta::new(signer.pubkey(), true), // Use signer's pubkey here too
         AccountMeta::new(vault_state_pda, false),
         AccountMeta::new(vault_account, false),
         AccountMeta::new_readonly(cpi_digest_pda, false),
@@ -395,7 +385,7 @@ pub fn create_initialize_cpi_digest_instruction(
 // Needs remaining accounts
 fn get_cpi_digest(
     client: &RpcClient,
-    signer: &Keypair,
+    signer: &Pubkey,
     vault_id: u64,
     ix_program_id: Pubkey,
     ix_data: Vec<u8>,
@@ -416,15 +406,20 @@ fn get_cpi_digest(
         data: view_cpi_digest_ix_data,
     };
 
-    // Create and sign the transaction using the Keypair
-    let transaction = Transaction::new_signed_with_payer(
+    // Get the latest blockhash needed for the unsigned transaction
+    let blockhash = client.get_latest_blockhash()?;
+
+    // Create an *unsigned* transaction, specifying the fee payer's pubkey
+    let mut transaction = Transaction::new_with_payer(
         &[instruction],
-        Some(&signer.pubkey()),
-        &[signer],
-        client.get_latest_blockhash()?,
+        Some(signer),
     );
 
-    // Simulate the signed transaction
+    // Set the recent blockhash
+    transaction.message.recent_blockhash = blockhash;
+
+    // Simulate the unsigned transaction.
+    // We rely on the default simulate_transaction behavior where sigVerify is false.
     let tx_res = client.simulate_transaction(&transaction)?;
 
     let digest_b64 = tx_res
