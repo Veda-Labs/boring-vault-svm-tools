@@ -1,16 +1,15 @@
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
-use solana_keypair::Keypair;
 
-use crate::manage_instructions::MintJitoSol;
+use crate::{manage_instructions::MintJitoSol, KeypairOrPublickey};
 
 use super::create_manage_instruction;
 
 pub fn create_mint_jito_sol_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
     amount: u64,

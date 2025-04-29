@@ -8,7 +8,7 @@ import json
 # Default funded keypair
 def get_default_keypair_secret():
     home = str(Path.home())
-    with open(f"{home}/.config/solana/id.json", "r") as f:
+    with open(f"{home}/.config/solana/veda.json", "r") as f:
         secret_key_data = json.load(f)
         return bytes(secret_key_data)
 
@@ -19,7 +19,7 @@ def get_program_keypair_secret():
 
 async def main():
     signer_bytes = get_default_keypair_secret()
-    program_signer_bytes = get_program_keypair_secret()
+    # program_signer_bytes = get_program_keypair_secret()
 
     try:
         # Create builder
@@ -30,8 +30,8 @@ async def main():
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
         # Add instructions
-        print("Adding initialize instruction...")
-        builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
+        # print("Adding initialize instruction...")
+        # builder.initialize(authority_pubkey_str, signer_bytes, program_signer_bytes)
         # print("Adding deploy instruction...")
         # builder.deploy(
         #     authority="DuheUFDBEGh1xKKvCvcTPQwA8eR3oo58kzVpB54TW5TP",
@@ -51,9 +51,9 @@ async def main():
         #     strategist=None  # Optional
         # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting up SOL as a deposit asset...")
         # builder.update_asset_data(
@@ -83,19 +83,19 @@ async def main():
         # tx_hash = builder.try_bundle_all(signer_bytes)
         # print(f"Success! Transaction hash: {tx_hash}")
 
-        # print("Transferring SOL from sub account 0 to sub account 1")
-        # builder.manage_transfer_sol_between_sub_accounts(
-        #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     to_sub_account=1,  # destination sub account
-        #     amount=1000000  # amount in lamports
-        # )
+        print("Transferring SOL from sub account 0 to sub account 1")
+        builder.manage_transfer_sol_between_sub_accounts(
+            signer_bytes=signer_bytes,
+            authority_bytes=None,  # or None if no authority needed
+            vault_id=3,  # your vault ID
+            sub_account=0,  # source sub account
+            to_sub_account=2,  # destination sub account
+            amount=10000  # amount in lamports
+        )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting deposit sub-account...")
         # builder.set_deposit_sub_account(

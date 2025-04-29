@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::instructions::*;
 use crate::manage_instructions::{kamino::*, system::*};
 use crate::utils::{get_lut_pda, get_vault_pda};
+use crate::{instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
@@ -97,24 +97,30 @@ impl TransactionBuilder {
         Ok(result.to_string())
     }
 
+    fn add_signer_if_keypair(&mut self, potential_signer: KeypairOrPublickey) {
+        if potential_signer.can_sign() {
+            let pubkey = potential_signer.pubkey();
+            if !self.signers.contains_key(&pubkey) {
+                if let Some(keypair) = potential_signer.into_keypair() {
+                    self.signers.insert(pubkey, keypair);
+                }
+            }
+        }
+    }
+
     pub fn initialize(
         &mut self,
         authority: Pubkey,
-        signer: Keypair,
-        program_signer: Keypair,
+        signer: KeypairOrPublickey,
+        program_signer: KeypairOrPublickey,
     ) -> Result<()> {
         let ix = create_initialize_instruction(&authority, &signer.pubkey())?;
 
         // Add instruction
         self.instructions.push(ix);
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-        if !self.signers.contains_key(&program_signer.pubkey()) {
-            self.signers.insert(program_signer.pubkey(), program_signer);
-        }
+        self.add_signer_if_keypair(signer);
+        self.add_signer_if_keypair(program_signer);
 
         Ok(())
     }
@@ -122,7 +128,7 @@ impl TransactionBuilder {
     pub fn deploy(
         &mut self,
         authority: Pubkey,
-        signer: Keypair,
+        signer: KeypairOrPublickey,
         base_asset: Pubkey,
         name: String,
         symbol: String,
@@ -156,20 +162,15 @@ impl TransactionBuilder {
             strategist,
         )?;
 
-        // Add instruction
         self.instructions.push(ix);
-
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
+        self.add_signer_if_keypair(signer);
 
         Ok(())
     }
 
     pub fn update_asset_data(
         &mut self,
-        signer: Keypair,
+        signer: KeypairOrPublickey,
         vault_id: u64,
         mint: Pubkey,
         allow_deposits: bool,
@@ -197,18 +198,14 @@ impl TransactionBuilder {
 
         // Add instruction
         self.instructions.push(ix);
-
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
+        self.add_signer_if_keypair(signer);
 
         Ok(())
     }
 
     pub fn deposit_sol(
         &mut self,
-        signer: Keypair,
+        signer: KeypairOrPublickey,
         vault_id: u64,
         user_pubkey: Pubkey,
         deposit_amount: u64,
@@ -224,19 +221,15 @@ impl TransactionBuilder {
 
         // Add instruction
         self.instructions.push(ix);
-
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
+        self.add_signer_if_keypair(signer);
 
         Ok(())
     }
 
     pub fn transfer_sol_between_sub_accounts(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         to_sub_account: u8,
@@ -255,22 +248,17 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
+        self.add_signer_if_keypair(signer);
+        if let Some(authority) = authority {
+            self.add_signer_if_keypair(authority);
         }
 
-        if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
-        }
         Ok(())
     }
 
     pub fn set_deposit_sub_account(
         &mut self,
-        signer: Keypair,
+        signer: KeypairOrPublickey,
         vault_id: u64,
         new_sub_account: u8,
     ) -> Result<()> {
@@ -279,21 +267,16 @@ impl TransactionBuilder {
             vault_id,
             new_sub_account,
         )?;
-    
-        // Add instruction
+
         self.instructions.push(ix);
-    
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-    
+        self.add_signer_if_keypair(signer);
+
         Ok(())
     }
-    
+
     pub fn set_withdraw_sub_account(
         &mut self,
-        signer: Keypair,
+        signer: KeypairOrPublickey,
         vault_id: u64,
         new_sub_account: u8,
     ) -> Result<()> {
@@ -302,15 +285,10 @@ impl TransactionBuilder {
             vault_id,
             new_sub_account,
         )?;
-    
-        // Add instruction
+
         self.instructions.push(ix);
-    
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-    
+        self.add_signer_if_keypair(signer);
+
         Ok(())
     }
 
@@ -318,8 +296,8 @@ impl TransactionBuilder {
 
     pub fn init_user_metadata(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
     ) -> Result<()> {
@@ -345,15 +323,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -361,8 +333,8 @@ impl TransactionBuilder {
 
     pub fn init_obligation(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         user_metadata: Pubkey,
@@ -390,15 +362,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -406,8 +372,8 @@ impl TransactionBuilder {
 
     pub fn init_obligation_farms_for_reserve(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         obligation: Pubkey,
@@ -441,15 +407,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -457,8 +417,8 @@ impl TransactionBuilder {
 
     pub fn refresh_reserve(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         reserve: Pubkey,
@@ -490,15 +450,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -506,8 +460,8 @@ impl TransactionBuilder {
 
     pub fn refresh_obligation(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         lending_market: Pubkey,
@@ -526,15 +480,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -542,8 +490,8 @@ impl TransactionBuilder {
 
     pub fn refresh_obligation_farms_for_reserve(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         obligation: Pubkey,
@@ -577,15 +525,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -593,8 +535,8 @@ impl TransactionBuilder {
 
     pub fn refresh_price_list(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         oracle_prices: Pubkey,
@@ -624,15 +566,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -640,8 +576,8 @@ impl TransactionBuilder {
 
     pub fn kamino_deposit(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         lending_market: Pubkey,
@@ -677,15 +613,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -693,8 +623,8 @@ impl TransactionBuilder {
 
     pub fn deposit_solend(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         deposit_mint: Pubkey,
@@ -731,15 +661,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -747,8 +671,8 @@ impl TransactionBuilder {
 
     pub fn wrap_sol(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         amount: u64,
@@ -766,15 +690,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -782,8 +700,8 @@ impl TransactionBuilder {
 
     pub fn unwrap_sol(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
     ) -> Result<()> {
@@ -799,15 +717,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())
@@ -815,8 +727,8 @@ impl TransactionBuilder {
 
     pub fn mint_jito_sol(
         &mut self,
-        signer: Keypair,
-        authority: Option<Keypair>,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
         amount: u64,
@@ -834,15 +746,9 @@ impl TransactionBuilder {
             self.instructions.push(ix);
         }
 
-        // Update signers
-        if !self.signers.contains_key(&signer.pubkey()) {
-            self.signers.insert(signer.pubkey(), signer);
-        }
-
+        self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
-            if !self.signers.contains_key(&authority.pubkey()) {
-                self.signers.insert(authority.pubkey(), authority);
-            }
+            self.add_signer_if_keypair(authority);
         }
 
         Ok(())

@@ -15,6 +15,7 @@ use spl_token::ID as TOKEN_PROGRAM_ID;
 use crate::{
     manage_instructions::{CloseAccount, TransferSol},
     utils::get_vault_pda,
+    KeypairOrPublickey,
 };
 
 use super::create_manage_instruction;
@@ -77,8 +78,8 @@ pub fn create_associated_token_account_instruction(
 
 pub fn create_wrap_sol_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
     amount: u64,
@@ -111,8 +112,8 @@ pub fn create_wrap_sol_instructions(
 
 pub fn create_unwrap_sol_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
 ) -> Result<Vec<Instruction>> {

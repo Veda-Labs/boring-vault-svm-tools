@@ -2,13 +2,12 @@ use anchor_lang::pubkey;
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
-use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
-use solana_signer::Signer;
 use spl_token::ID as TOKEN_PROGRAM_ID;
 
 use crate::{
-    manage_instructions::SolendDepositReserveLiquidityAndObligationCollateral, utils::get_vault_pda,
+    manage_instructions::SolendDepositReserveLiquidityAndObligationCollateral,
+    utils::get_vault_pda, KeypairOrPublickey,
 };
 
 use super::{create_manage_instruction, init_associated_token_account_if_needed};
@@ -16,8 +15,8 @@ use super::{create_manage_instruction, init_associated_token_account_if_needed};
 // TODO this tx is too big if u send all at once
 pub fn create_deposit_solend_instructions(
     client: &RpcClient,
-    signer: &Keypair,
-    authority: Option<&Keypair>,
+    signer: &KeypairOrPublickey,
+    authority: Option<&KeypairOrPublickey>,
     vault_id: u64,
     sub_account: u8,
     deposit_mint: &Pubkey,

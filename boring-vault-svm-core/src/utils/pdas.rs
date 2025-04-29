@@ -1,7 +1,12 @@
 use super::bindings::boring_vault_svm;
 use super::constants::*;
+use anchor_lang::ToAccountMetas;
+use eyre::Result;
 use solana_address_lookup_table_interface::instruction::derive_lookup_table_address;
+use solana_instruction::AccountMeta;
+use solana_program::hash::hash;
 use solana_pubkey::Pubkey;
+use anchor_lang::AccountDeserialize;
 
 pub fn get_lut_pda(authority: &Pubkey, recent_block_slot: u64) -> Pubkey {
     let res = derive_lookup_table_address(authority, recent_block_slot);
