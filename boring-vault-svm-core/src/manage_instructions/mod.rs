@@ -20,3 +20,15 @@ pub trait ExternalInstruction {
     fn ix_remaining_accounts(&self) -> Vec<AccountMeta>;
     fn ix_operators(&self) -> Operators;
 }
+
+#[macro_export]
+macro_rules! impl_external_instruction_common {
+    () => {
+        fn vault_id(&self) -> u64 {
+            self.vault_id
+        }
+        fn sub_account(&self) -> u8 {
+            self.sub_account
+        }
+    };
+}

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 use boring_vault_svm_core::KeypairOrPublickey;
 // use boring_vault_svm_core::transaction_builder;
 use pyo3::prelude::*;

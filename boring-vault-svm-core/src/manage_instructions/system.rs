@@ -1,3 +1,4 @@
+use crate::impl_external_instruction_common;
 use crate::manage_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::pdas;
@@ -25,12 +26,8 @@ impl TransferSol {
 }
 
 impl ExternalInstruction for TransferSol {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
+
     fn ix_program_id(&self) -> Pubkey {
         system_program::ID
     }
@@ -81,12 +78,8 @@ impl TransferSolBetweenSubAccounts {
 }
 
 impl ExternalInstruction for TransferSolBetweenSubAccounts {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
+
     fn ix_program_id(&self) -> Pubkey {
         system_program::ID
     }
@@ -149,13 +142,7 @@ impl CreateAccountWithSeed {
 }
 
 impl ExternalInstruction for CreateAccountWithSeed {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         system_program::ID
@@ -222,13 +209,7 @@ impl CloseAccount {
 }
 
 impl ExternalInstruction for CloseAccount {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         self.token_program

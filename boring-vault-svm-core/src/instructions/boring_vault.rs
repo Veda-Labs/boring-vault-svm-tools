@@ -5,10 +5,10 @@ use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
+use solana_sdk::hash::hash;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
-use solana_sdk::hash::hash;
 
 use crate::KeypairOrPublickey;
 use crate::{
@@ -73,12 +73,12 @@ pub fn create_deploy_instruction(
     ];
 
     let authority = *authority;
-    let exchange_rate_provider = exchange_rate_provider.unwrap_or_else(|| authority);
-    let payout_address = payout_address.unwrap_or_else(|| authority);
-    let platform_fee_bps = platform_fee_bps.unwrap_or_else(|| 0);
-    let performance_fee_bps = performance_fee_bps.unwrap_or_else(|| 0);
+    let exchange_rate_provider = exchange_rate_provider.unwrap_or(authority);
+    let payout_address = payout_address.unwrap_or(authority);
+    let platform_fee_bps = platform_fee_bps.unwrap_or(0);
+    let performance_fee_bps = performance_fee_bps.unwrap_or(0);
     let withdraw_authority = withdraw_authority.unwrap_or_default();
-    let strategist = strategist.unwrap_or_else(|| authority);
+    let strategist = strategist.unwrap_or(authority);
 
     let args = boring_vault_svm::types::DeployArgs {
         authority,
@@ -409,15 +409,12 @@ fn get_cpi_digest(
     // 2. Transaction fee payer (signer)
     let signer_meta = AccountMeta {
         pubkey: *signer_pubkey,
-        is_signer: true,  // Runtime marks fee payer as signer
+        is_signer: true,   // Runtime marks fee payer as signer
         is_writable: true, // Runtime marks fee payer as writable
     };
 
     // 3. Combine the accounts
-    let mut combined_accounts = vec![
-        implicit_ix_program_id_meta,
-        signer_meta,
-    ];
+    let mut combined_accounts = vec![implicit_ix_program_id_meta, signer_meta];
     combined_accounts.extend(ix_remaining_accounts.iter().cloned()); // Use cloned accounts
 
     // --- Apply operators using the combined list ---
@@ -428,14 +425,19 @@ fn get_cpi_digest(
                 let from = *ix_index as usize;
                 let to = from + (*length as usize);
                 if to > ix_data.len() {
-                     return Err(eyre::eyre!("IngestInstruction bounds [{},{}] out of range for ix_data len {}", from, to, ix_data.len()));
+                    return Err(eyre::eyre!(
+                        "IngestInstruction bounds [{},{}] out of range for ix_data len {}",
+                        from,
+                        to,
+                        ix_data.len()
+                    ));
                 }
                 hash_data.extend_from_slice(&ix_data[from..to]);
             }
             boring_vault_svm::types::Operator::IngestAccount(account_index) => {
                 let idx = *account_index as usize;
                 if idx >= combined_accounts.len() {
-                     return Err(eyre::eyre!(
+                    return Err(eyre::eyre!(
                          "IngestAccount index {} out of bounds. Combined accounts len: {}. Accounts: {:?}",
                          idx, combined_accounts.len(), combined_accounts.iter().map(|a| a.pubkey).collect::<Vec<_>>()
                      ));
