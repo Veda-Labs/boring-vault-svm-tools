@@ -122,7 +122,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
     let (cpi_digest_pda, digest) = get_cpi_digest(
         &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
-        eix.ix_program_id(),
+        &eix.ix_program_id(), // Pass reference to the returned Pubkey
         eix.ix_data(),
         eix.ix_remaining_accounts(),
         eix.ix_operators(),
@@ -148,7 +148,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
                 instructions.push(create_initialize_cpi_digest_instruction(
                     &authority.pubkey(), // Use authority's pubkey
                     eix.vault_id(),
-                    cpi_digest_pda,
+                    &cpi_digest_pda,      // <<< Pass reference
                     digest,
                     eix.ix_operators(),
                 )?);
@@ -194,24 +194,24 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 pub fn create_update_asset_data_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    mint: Pubkey,
+    mint: &Pubkey,
     allow_deposits: bool,
     allow_withdrawals: bool,
     share_premium_bps: u16,
     is_pegged_to_base_asset: bool,
-    price_feed: Pubkey,
+    price_feed: &Pubkey,
     inverse_price_feed: bool,
     max_staleness: u64,
     min_samples: u32,
 ) -> Result<Instruction> {
     let vault_state_pda = get_vault_state_pda(vault_id);
-    let asset_data_pda = get_asset_data_pda(vault_state_pda, mint);
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, *mint);
 
     let accounts = boring_vault_svm::client::accounts::UpdateAssetData {
         signer: *signer,
         boring_vault_state: vault_state_pda,
         system_program: system_program::ID,
-        asset: mint,
+        asset: *mint,
         asset_data: asset_data_pda,
     };
 
@@ -220,7 +220,7 @@ pub fn create_update_asset_data_instruction(
         allow_withdrawals,
         share_premium_bps,
         is_pegged_to_base_asset,
-        price_feed,
+        price_feed: *price_feed,
         inverse_price_feed,
         max_staleness,
         min_samples,
@@ -246,7 +246,7 @@ pub fn create_update_asset_data_instruction(
 pub fn create_deposit_sol_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    user_pubkey: Pubkey,
+    user_pubkey: &Pubkey,
     deposit_amount: u64,
     min_mint_amount: u64,
 ) -> Result<Instruction> {
@@ -256,7 +256,7 @@ pub fn create_deposit_sol_instruction(
     let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
     let share_mint = get_vault_share_mint(vault_state_pda);
     let user_share_ata = get_associated_token_address_with_program_id(
-        &user_pubkey,
+        user_pubkey,
         &share_mint,
         &TOKEN_2022_PROGRAM_ID,
     );
@@ -350,7 +350,7 @@ pub fn create_set_withdraw_sub_account_instruction(
 pub fn create_initialize_cpi_digest_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    cpi_digest_pda: Pubkey,
+    cpi_digest_pda: &Pubkey,
     digest: [u8; 32],
     operators: boring_vault_svm::types::Operators,
 ) -> Result<Instruction> {
@@ -359,7 +359,7 @@ pub fn create_initialize_cpi_digest_instruction(
         AccountMeta::new(*signer, true),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(vault_state_pda, false),
-        AccountMeta::new(cpi_digest_pda, false),
+        AccountMeta::new(*cpi_digest_pda, false),
     ];
 
     let args = boring_vault_svm::types::CpiDigestArgs {
@@ -385,7 +385,7 @@ pub fn create_initialize_cpi_digest_instruction(
 fn get_cpi_digest(
     signer_pubkey: &Pubkey,
     vault_id: u64,
-    ix_program_id: Pubkey,
+    ix_program_id: &Pubkey,
     ix_data: Vec<u8>,
     ix_remaining_accounts: Vec<AccountMeta>,
     operators: boring_vault_svm::types::Operators,
@@ -401,7 +401,7 @@ fn get_cpi_digest(
 
     // 1. Implicit account from ViewCpiDigest context
     let implicit_ix_program_id_meta = AccountMeta {
-        pubkey: ix_program_id,
+        pubkey: *ix_program_id,
         is_signer: false,
         is_writable: false,
     };

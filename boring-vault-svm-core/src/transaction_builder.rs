@@ -64,7 +64,7 @@ impl TransactionBuilder {
         }
 
         // 2. Compile the transaction using the new method
-        let b64_tx = self.compile_to_versioned_transaction_b64(&payer_pubkey)?;
+        let b64_tx = self.compile_to_versioned_transaction_b64(payer_pubkey)?;
 
         // 3. Decode Base64
         let serialized_tx = STANDARD.decode(&b64_tx)?;
@@ -90,9 +90,9 @@ impl TransactionBuilder {
     /// signs it with all available keypairs in the builder, serializes it,
     /// and returns the Base64 encoded string.
     /// Does NOT send the transaction or clear the builder state.
-    pub fn compile_to_versioned_transaction_b64(&self, payer_pubkey: &Pubkey) -> Result<String> {
+    pub fn compile_to_versioned_transaction_b64(&self, payer_pubkey: Pubkey) -> Result<String> {
         let message =
-            VersionedMessage::Legacy(Message::new(&self.instructions, Some(payer_pubkey)));
+            VersionedMessage::Legacy(Message::new(&self.instructions, Some(&payer_pubkey)));
 
         let signers: Vec<&Keypair> = self.signers.values().collect();
 
@@ -192,12 +192,12 @@ impl TransactionBuilder {
         let ix = create_update_asset_data_instruction(
             &signer.pubkey(),
             vault_id,
-            mint,
+            &mint,
             allow_deposits,
             allow_withdrawals,
             share_premium_bps,
             is_pegged_to_base_asset,
-            price_feed,
+            &price_feed,
             inverse_price_feed,
             max_staleness,
             min_samples,
@@ -221,7 +221,7 @@ impl TransactionBuilder {
         let ix = create_deposit_sol_instruction(
             &signer.pubkey(),
             vault_id,
-            user_pubkey,
+            &user_pubkey,
             deposit_amount,
             min_mint_amount,
         )?;
