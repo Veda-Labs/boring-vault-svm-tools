@@ -148,7 +148,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
                 instructions.push(create_initialize_cpi_digest_instruction(
                     &authority.pubkey(), // Use authority's pubkey
                     eix.vault_id(),
-                    &cpi_digest_pda,      // <<< Pass reference
+                    &cpi_digest_pda, // <<< Pass reference
                     digest,
                     eix.ix_operators(),
                 )?);

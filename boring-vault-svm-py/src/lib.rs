@@ -5,7 +5,9 @@ use pyo3::prelude::*;
 // use pyo3::wrap_pyfunction;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
-use std::str::FromStr;
+use utils::{to_keypair_from_bytes, to_pubkey_from_string};
+
+mod utils;
 // TODO could add view functions?
 // TODO also maybe the tx builder should be more of a class where you add txs to it, then you have 1 call to execute the batch, or maybe execute single?
 // would need logic to break up a lot of actions into multiple batches though
@@ -43,16 +45,10 @@ impl TransactionBuilder {
         signer_bytes: &[u8],
         program_signer_bytes: &[u8],
     ) -> PyResult<()> {
-        let authority = Pubkey::from_str(&authority)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
-        let program_signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(program_signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let authority = to_pubkey_from_string(authority)?;
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let program_signer: KeypairOrPublickey =
+            KeypairOrPublickey::Keypair(to_keypair_from_bytes(program_signer_bytes)?);
 
         self.inner
             .initialize(authority, signer, program_signer)
@@ -79,45 +75,27 @@ impl TransactionBuilder {
         withdraw_authority: Option<String>,
         strategist: Option<String>,
     ) -> PyResult<()> {
-        let authority = Pubkey::from_str(&authority)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
-        let base_asset = Pubkey::from_str(&base_asset)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let authority = to_pubkey_from_string(authority)?;
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let base_asset = to_pubkey_from_string(base_asset)?;
 
-        // Convert Option<String> to Option<Pubkey>
         let exchange_rate_provider = match exchange_rate_provider {
-            Some(s) => Some(
-                Pubkey::from_str(&s)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            Some(s) => Some(to_pubkey_from_string(s)?),
             None => None,
         };
 
         let payout_address = match payout_address {
-            Some(s) => Some(
-                Pubkey::from_str(&s)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            Some(s) => Some(to_pubkey_from_string(s)?),
             None => None,
         };
 
         let withdraw_authority = match withdraw_authority {
-            Some(s) => Some(
-                Pubkey::from_str(&s)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            Some(s) => Some(to_pubkey_from_string(s)?),
             None => None,
         };
 
         let strategist = match strategist {
-            Some(s) => Some(
-                Pubkey::from_str(&s)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            ),
+            Some(s) => Some(to_pubkey_from_string(s)?),
             None => None,
         };
 
@@ -158,14 +136,9 @@ impl TransactionBuilder {
         max_staleness: u64,
         min_samples: u32,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
-        let mint = Pubkey::from_str(&mint)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let price_feed = Pubkey::from_str(&price_feed)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let mint = to_pubkey_from_string(mint)?;
+        let price_feed = to_pubkey_from_string(price_feed)?;
 
         self.inner
             .update_asset_data(
@@ -194,12 +167,8 @@ impl TransactionBuilder {
         deposit_amount: u64,
         min_mint_amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
-        let user_pubkey = Pubkey::from_str(&user_pubkey)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let user_pubkey = to_pubkey_from_string(user_pubkey)?;
 
         self.inner
             .deposit_sol(
@@ -223,16 +192,10 @@ impl TransactionBuilder {
         to_sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
@@ -256,10 +219,7 @@ impl TransactionBuilder {
         vault_id: u64,
         new_sub_account: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         self.inner
             .set_deposit_sub_account(signer, vault_id, new_sub_account)
@@ -274,10 +234,7 @@ impl TransactionBuilder {
         vault_id: u64,
         new_sub_account: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         self.inner
             .set_withdraw_sub_account(signer, vault_id, new_sub_account)
@@ -293,16 +250,10 @@ impl TransactionBuilder {
         vault_id: u64,
         sub_account: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
@@ -319,28 +270,20 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        user_metadata: &str,
-        lending_market: &str,
+        user_metadata: String,
+        lending_market: String,
         tag: u8,
         id: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let user_metadata_pubkey = Pubkey::from_str(user_metadata)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let user_metadata_pubkey = to_pubkey_from_string(user_metadata)?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
 
         self.inner
             .init_obligation(
@@ -364,39 +307,27 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        obligation: &str,
-        reserve: &str,
-        reserve_farm_state: &str,
-        obligation_farm: &str,
-        lending_market: &str,
-        farms_program: &str,
+        obligation: String,
+        reserve: String,
+        reserve_farm_state: String,
+        obligation_farm: String,
+        lending_market: String,
+        farms_program: String,
         mode: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let obligation_pubkey = Pubkey::from_str(obligation)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_pubkey = Pubkey::from_str(reserve)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_farm_state_pubkey = Pubkey::from_str(reserve_farm_state)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let obligation_farm_pubkey = Pubkey::from_str(obligation_farm)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let farms_program_pubkey = Pubkey::from_str(farms_program)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let obligation_pubkey = to_pubkey_from_string(obligation)?;
+        let reserve_pubkey = to_pubkey_from_string(reserve)?;
+        let reserve_farm_state_pubkey = to_pubkey_from_string(reserve_farm_state)?;
+        let obligation_farm_pubkey = to_pubkey_from_string(obligation_farm)?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let farms_program_pubkey = to_pubkey_from_string(farms_program)?;
 
         self.inner
             .init_obligation_farms_for_reserve(
@@ -423,38 +354,26 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        reserve: &str,
-        lending_market: &str,
-        pyth_oracle: &str,
-        switchboard_price_oracle: &str,
-        switchboard_twap_oracle: &str,
-        scope_prices: &str,
+        reserve: String,
+        lending_market: String,
+        pyth_oracle: String,
+        switchboard_price_oracle: String,
+        switchboard_twap_oracle: String,
+        scope_prices: String,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let reserve_pubkey = Pubkey::from_str(reserve)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let pyth_oracle_pubkey = Pubkey::from_str(pyth_oracle)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let switchboard_price_oracle_pubkey = Pubkey::from_str(switchboard_price_oracle)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let switchboard_twap_oracle_pubkey = Pubkey::from_str(switchboard_twap_oracle)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let scope_prices_pubkey = Pubkey::from_str(scope_prices)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let reserve_pubkey = to_pubkey_from_string(reserve)?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let pyth_oracle_pubkey = to_pubkey_from_string(pyth_oracle)?;
+        let switchboard_price_oracle_pubkey = to_pubkey_from_string(switchboard_price_oracle)?;
+        let switchboard_twap_oracle_pubkey = to_pubkey_from_string(switchboard_twap_oracle)?;
+        let scope_prices_pubkey = to_pubkey_from_string(scope_prices)?;
 
         self.inner
             .refresh_reserve(
@@ -480,26 +399,18 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: &str,
-        obligation: &str,
+        lending_market: String,
+        obligation: String,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let obligation_pubkey = Pubkey::from_str(obligation)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let obligation_pubkey = to_pubkey_from_string(obligation)?;
 
         self.inner
             .refresh_obligation(
@@ -521,39 +432,27 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        obligation: &str,
-        reserve: &str,
-        reserve_farm_state: &str,
-        obligation_farm: &str,
-        lending_market: &str,
-        farms_program: &str,
+        obligation: String,
+        reserve: String,
+        reserve_farm_state: String,
+        obligation_farm: String,
+        lending_market: String,
+        farms_program: String,
         mode: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let obligation_pubkey = Pubkey::from_str(obligation)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_pubkey = Pubkey::from_str(reserve)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_farm_state_pubkey = Pubkey::from_str(reserve_farm_state)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let obligation_farm_pubkey = Pubkey::from_str(obligation_farm)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let farms_program_pubkey = Pubkey::from_str(farms_program)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let obligation_pubkey = to_pubkey_from_string(obligation)?;
+        let reserve_pubkey = to_pubkey_from_string(reserve)?;
+        let reserve_farm_state_pubkey = to_pubkey_from_string(reserve_farm_state)?;
+        let obligation_farm_pubkey = to_pubkey_from_string(obligation_farm)?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let farms_program_pubkey = to_pubkey_from_string(farms_program)?;
 
         self.inner
             .refresh_obligation_farms_for_reserve(
@@ -580,35 +479,26 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        oracle_prices: &str,
-        oracle_mapping: &str,
-        oracle_twaps: &str,
+        oracle_prices: String,
+        oracle_mapping: String,
+        oracle_twaps: String,
         price_accounts: Vec<String>,
         tokens: Vec<u16>,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let oracle_prices_pubkey = Pubkey::from_str(oracle_prices)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let oracle_mapping_pubkey = Pubkey::from_str(oracle_mapping)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let oracle_twaps_pubkey = Pubkey::from_str(oracle_twaps)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let oracle_prices_pubkey = to_pubkey_from_string(oracle_prices)?;
+        let oracle_mapping_pubkey = to_pubkey_from_string(oracle_mapping)?;
+        let oracle_twaps_pubkey = to_pubkey_from_string(oracle_twaps)?;
 
         let price_accounts_pubkeys: Vec<Pubkey> = price_accounts
             .iter()
-            .map(|s| Pubkey::from_str(s).unwrap())
+            .map(|s| to_pubkey_from_string(s.to_string()).unwrap())
             .collect();
 
         self.inner
@@ -634,43 +524,30 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: &str,
-        obligation: &str,
-        reserve: &str,
-        reserve_liquidity_mint: &str,
-        reserve_liquidity_supply: &str,
-        reserve_collateral_mint: &str,
-        reserve_destination_deposit_collateral: &str,
+        lending_market: String,
+        obligation: String,
+        reserve: String,
+        reserve_liquidity_mint: String,
+        reserve_liquidity_supply: String,
+        reserve_collateral_mint: String,
+        reserve_destination_deposit_collateral: String,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let obligation_pubkey = Pubkey::from_str(obligation)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_pubkey = Pubkey::from_str(reserve)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_liquidity_mint_pubkey = Pubkey::from_str(reserve_liquidity_mint)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_liquidity_supply_pubkey = Pubkey::from_str(reserve_liquidity_supply)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_collateral_mint_pubkey = Pubkey::from_str(reserve_collateral_mint)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let obligation_pubkey = to_pubkey_from_string(obligation)?;
+        let reserve_pubkey = to_pubkey_from_string(reserve)?;
+        let reserve_liquidity_mint_pubkey = to_pubkey_from_string(reserve_liquidity_mint)?;
+        let reserve_liquidity_supply_pubkey = to_pubkey_from_string(reserve_liquidity_supply)?;
+        let reserve_collateral_mint_pubkey = to_pubkey_from_string(reserve_collateral_mint)?;
         let reserve_destination_deposit_collateral_pubkey =
-            Pubkey::from_str(reserve_destination_deposit_collateral)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+            to_pubkey_from_string(reserve_destination_deposit_collateral)?;
 
         self.inner
             .kamino_deposit(
@@ -698,50 +575,35 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        deposit_mint: &str,
-        reserve_collateral_mint: &str,
-        lending_market: &str,
-        reserve: &str,
-        reserve_liquidity_supply_spl_token_account: &str,
-        lending_market_authority: &str,
-        destination_deposit_reserve_collateral_supply_spl_token_account: &str,
-        pyth_price_oracle: &str,
-        switchboard_price_oracle: &str,
+        deposit_mint: String,
+        reserve_collateral_mint: String,
+        lending_market: String,
+        reserve: String,
+        reserve_liquidity_supply_spl_token_account: String,
+        lending_market_authority: String,
+        destination_deposit_reserve_collateral_supply_spl_token_account: String,
+        pyth_price_oracle: String,
+        switchboard_price_oracle: String,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
-        let deposit_mint_pubkey = Pubkey::from_str(deposit_mint)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_collateral_mint_pubkey = Pubkey::from_str(reserve_collateral_mint)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_pubkey = Pubkey::from_str(lending_market)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let reserve_pubkey = Pubkey::from_str(reserve)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+        let deposit_mint_pubkey = to_pubkey_from_string(deposit_mint)?;
+        let reserve_collateral_mint_pubkey = to_pubkey_from_string(reserve_collateral_mint)?;
+        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
+        let reserve_pubkey = to_pubkey_from_string(reserve)?;
         let reserve_liquidity_supply_pubkey =
-            Pubkey::from_str(reserve_liquidity_supply_spl_token_account)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let lending_market_authority_pubkey = Pubkey::from_str(lending_market_authority)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+            to_pubkey_from_string(reserve_liquidity_supply_spl_token_account)?;
+        let lending_market_authority_pubkey = to_pubkey_from_string(lending_market_authority)?;
         let destination_deposit_pubkey =
-            Pubkey::from_str(destination_deposit_reserve_collateral_supply_spl_token_account)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let pyth_oracle_pubkey = Pubkey::from_str(pyth_price_oracle)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-        let switchboard_oracle_pubkey = Pubkey::from_str(switchboard_price_oracle)
-            .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+            to_pubkey_from_string(destination_deposit_reserve_collateral_supply_spl_token_account)?;
+        let pyth_oracle_pubkey = to_pubkey_from_string(pyth_price_oracle)?;
+        let switchboard_oracle_pubkey = to_pubkey_from_string(switchboard_price_oracle)?;
 
         self.inner
             .deposit_solend(
@@ -773,16 +635,10 @@ impl TransactionBuilder {
         sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
@@ -800,16 +656,10 @@ impl TransactionBuilder {
         vault_id: u64,
         sub_account: u8,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
@@ -828,16 +678,10 @@ impl TransactionBuilder {
         sub_account: u8,
         amount: u64,
     ) -> PyResult<()> {
-        let signer = KeypairOrPublickey::Keypair(
-            Keypair::from_bytes(signer_bytes)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-        );
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
         let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(
-                Keypair::from_bytes(bytes)
-                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?,
-            )),
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
             None => None,
         };
 
