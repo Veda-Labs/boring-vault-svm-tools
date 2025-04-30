@@ -5,10 +5,10 @@ use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
+use solana_sdk::hash::hash;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
-use solana_sdk::hash::hash;
 
 use crate::KeypairOrPublickey;
 use crate::{
@@ -73,12 +73,12 @@ pub fn create_deploy_instruction(
     ];
 
     let authority = *authority;
-    let exchange_rate_provider = exchange_rate_provider.unwrap_or_else(|| authority);
-    let payout_address = payout_address.unwrap_or_else(|| authority);
-    let platform_fee_bps = platform_fee_bps.unwrap_or_else(|| 0);
-    let performance_fee_bps = performance_fee_bps.unwrap_or_else(|| 0);
+    let exchange_rate_provider = exchange_rate_provider.unwrap_or(authority);
+    let payout_address = payout_address.unwrap_or(authority);
+    let platform_fee_bps = platform_fee_bps.unwrap_or(0);
+    let performance_fee_bps = performance_fee_bps.unwrap_or(0);
     let withdraw_authority = withdraw_authority.unwrap_or_default();
-    let strategist = strategist.unwrap_or_else(|| authority);
+    let strategist = strategist.unwrap_or(authority);
 
     let args = boring_vault_svm::types::DeployArgs {
         authority,
@@ -122,7 +122,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
     let (cpi_digest_pda, digest) = get_cpi_digest(
         &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
-        eix.ix_program_id(),
+        &eix.ix_program_id(), // Pass reference to the returned Pubkey
         eix.ix_data(),
         eix.ix_remaining_accounts(),
         eix.ix_operators(),
@@ -148,7 +148,7 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
                 instructions.push(create_initialize_cpi_digest_instruction(
                     &authority.pubkey(), // Use authority's pubkey
                     eix.vault_id(),
-                    cpi_digest_pda,
+                    &cpi_digest_pda, // <<< Pass reference
                     digest,
                     eix.ix_operators(),
                 )?);
@@ -194,24 +194,24 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 pub fn create_update_asset_data_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    mint: Pubkey,
+    mint: &Pubkey,
     allow_deposits: bool,
     allow_withdrawals: bool,
     share_premium_bps: u16,
     is_pegged_to_base_asset: bool,
-    price_feed: Pubkey,
+    price_feed: &Pubkey,
     inverse_price_feed: bool,
     max_staleness: u64,
     min_samples: u32,
 ) -> Result<Instruction> {
     let vault_state_pda = get_vault_state_pda(vault_id);
-    let asset_data_pda = get_asset_data_pda(vault_state_pda, mint);
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, *mint);
 
     let accounts = boring_vault_svm::client::accounts::UpdateAssetData {
         signer: *signer,
         boring_vault_state: vault_state_pda,
         system_program: system_program::ID,
-        asset: mint,
+        asset: *mint,
         asset_data: asset_data_pda,
     };
 
@@ -220,7 +220,7 @@ pub fn create_update_asset_data_instruction(
         allow_withdrawals,
         share_premium_bps,
         is_pegged_to_base_asset,
-        price_feed,
+        price_feed: *price_feed,
         inverse_price_feed,
         max_staleness,
         min_samples,
@@ -246,7 +246,7 @@ pub fn create_update_asset_data_instruction(
 pub fn create_deposit_sol_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    user_pubkey: Pubkey,
+    user_pubkey: &Pubkey,
     deposit_amount: u64,
     min_mint_amount: u64,
 ) -> Result<Instruction> {
@@ -256,7 +256,7 @@ pub fn create_deposit_sol_instruction(
     let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
     let share_mint = get_vault_share_mint(vault_state_pda);
     let user_share_ata = get_associated_token_address_with_program_id(
-        &user_pubkey,
+        user_pubkey,
         &share_mint,
         &TOKEN_2022_PROGRAM_ID,
     );
@@ -350,7 +350,7 @@ pub fn create_set_withdraw_sub_account_instruction(
 pub fn create_initialize_cpi_digest_instruction(
     signer: &Pubkey,
     vault_id: u64,
-    cpi_digest_pda: Pubkey,
+    cpi_digest_pda: &Pubkey,
     digest: [u8; 32],
     operators: boring_vault_svm::types::Operators,
 ) -> Result<Instruction> {
@@ -359,7 +359,7 @@ pub fn create_initialize_cpi_digest_instruction(
         AccountMeta::new(*signer, true),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(vault_state_pda, false),
-        AccountMeta::new(cpi_digest_pda, false),
+        AccountMeta::new(*cpi_digest_pda, false),
     ];
 
     let args = boring_vault_svm::types::CpiDigestArgs {
@@ -385,7 +385,7 @@ pub fn create_initialize_cpi_digest_instruction(
 fn get_cpi_digest(
     signer_pubkey: &Pubkey,
     vault_id: u64,
-    ix_program_id: Pubkey,
+    ix_program_id: &Pubkey,
     ix_data: Vec<u8>,
     ix_remaining_accounts: Vec<AccountMeta>,
     operators: boring_vault_svm::types::Operators,
@@ -401,7 +401,7 @@ fn get_cpi_digest(
 
     // 1. Implicit account from ViewCpiDigest context
     let implicit_ix_program_id_meta = AccountMeta {
-        pubkey: ix_program_id,
+        pubkey: *ix_program_id,
         is_signer: false,
         is_writable: false,
     };
@@ -409,15 +409,12 @@ fn get_cpi_digest(
     // 2. Transaction fee payer (signer)
     let signer_meta = AccountMeta {
         pubkey: *signer_pubkey,
-        is_signer: true,  // Runtime marks fee payer as signer
+        is_signer: true,   // Runtime marks fee payer as signer
         is_writable: true, // Runtime marks fee payer as writable
     };
 
     // 3. Combine the accounts
-    let mut combined_accounts = vec![
-        implicit_ix_program_id_meta,
-        signer_meta,
-    ];
+    let mut combined_accounts = vec![implicit_ix_program_id_meta, signer_meta];
     combined_accounts.extend(ix_remaining_accounts.iter().cloned()); // Use cloned accounts
 
     // --- Apply operators using the combined list ---
@@ -428,14 +425,19 @@ fn get_cpi_digest(
                 let from = *ix_index as usize;
                 let to = from + (*length as usize);
                 if to > ix_data.len() {
-                     return Err(eyre::eyre!("IngestInstruction bounds [{},{}] out of range for ix_data len {}", from, to, ix_data.len()));
+                    return Err(eyre::eyre!(
+                        "IngestInstruction bounds [{},{}] out of range for ix_data len {}",
+                        from,
+                        to,
+                        ix_data.len()
+                    ));
                 }
                 hash_data.extend_from_slice(&ix_data[from..to]);
             }
             boring_vault_svm::types::Operator::IngestAccount(account_index) => {
                 let idx = *account_index as usize;
                 if idx >= combined_accounts.len() {
-                     return Err(eyre::eyre!(
+                    return Err(eyre::eyre!(
                          "IngestAccount index {} out of bounds. Combined accounts len: {}. Accounts: {:?}",
                          idx, combined_accounts.len(), combined_accounts.iter().map(|a| a.pubkey).collect::<Vec<_>>()
                      ));

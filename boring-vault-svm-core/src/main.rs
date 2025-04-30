@@ -9,8 +9,8 @@ fn main() {
             let keypair = Keypair::from_bytes(&keypair_bytes).unwrap();
             println!("Found vanity keypair!");
             println!("Public key: {}", keypair.pubkey());
-            println!("Private key bytes: {:?}", keypair_bytes);
+            println!("Private key bytes: {keypair_bytes:?}");
         }
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 }

@@ -1,3 +1,4 @@
+use crate::impl_external_instruction_common;
 use crate::manage_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::{discriminator, pdas};
@@ -28,12 +29,8 @@ impl KaminoInitUserMetaData {
 }
 
 impl ExternalInstruction for KaminoInitUserMetaData {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
+
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
     }
@@ -101,12 +98,8 @@ impl KaminoInitObligation {
 }
 
 impl ExternalInstruction for KaminoInitObligation {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
+
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
     }
@@ -197,13 +190,7 @@ impl KaminoInitObligationFarmsForReserve {
 }
 
 impl ExternalInstruction for KaminoInitObligationFarmsForReserve {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
@@ -283,13 +270,7 @@ impl KaminoRefreshReserve {
 }
 
 impl ExternalInstruction for KaminoRefreshReserve {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
@@ -353,13 +334,7 @@ impl KaminoRefreshPriceList {
 }
 
 impl ExternalInstruction for KaminoRefreshPriceList {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
@@ -426,13 +401,7 @@ impl KaminoRefreshObligation {
 }
 
 impl ExternalInstruction for KaminoRefreshObligation {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
@@ -498,13 +467,7 @@ impl KaminoRefreshObligationFarmsForReserve {
 }
 
 impl ExternalInstruction for KaminoRefreshObligationFarmsForReserve {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID
@@ -519,7 +482,6 @@ impl ExternalInstruction for KaminoRefreshObligationFarmsForReserve {
 
     fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
         let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
-        println!("vault pda: {}", owner);
         let lending_market_authority =
             pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
         vec![
@@ -589,13 +551,7 @@ impl KaminoDeposit {
 }
 
 impl ExternalInstruction for KaminoDeposit {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         KAMINO_PROGRAM_ID

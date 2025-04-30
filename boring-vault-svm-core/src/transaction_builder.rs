@@ -1,20 +1,21 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use crate::manage_instructions::{kamino::*, system::*};
 use crate::utils::{get_lut_pda, get_vault_pda};
 use crate::{instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use bincode;
 use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
-use solana_signer::Signer;
 use solana_sdk::{
     message::{Message, VersionedMessage},
     transaction::VersionedTransaction,
 };
-use base64::{engine::general_purpose::STANDARD, Engine as _};
-use bincode;
+use solana_signer::Signer;
 
 pub struct TransactionBuilder {
     client: RpcClient,
@@ -63,7 +64,7 @@ impl TransactionBuilder {
         }
 
         // 2. Compile the transaction using the new method
-        let b64_tx = self.compile_to_versioned_transaction_b64(&payer_pubkey)?;
+        let b64_tx = self.compile_to_versioned_transaction_b64(payer_pubkey)?;
 
         // 3. Decode Base64
         let serialized_tx = STANDARD.decode(&b64_tx)?;
@@ -75,9 +76,7 @@ impl TransactionBuilder {
         versioned_tx.message.set_recent_blockhash(recent_blockhash);
 
         // 5. Send the deserialized VersionedTransaction
-        let result = self
-            .client
-            .send_and_confirm_transaction(&versioned_tx)?;
+        let result = self.client.send_and_confirm_transaction(&versioned_tx)?;
 
         // 6. Clear builder state
         self.instructions.clear();
@@ -91,15 +90,9 @@ impl TransactionBuilder {
     /// signs it with all available keypairs in the builder, serializes it,
     /// and returns the Base64 encoded string.
     /// Does NOT send the transaction or clear the builder state.
-    pub fn compile_to_versioned_transaction_b64(
-        &self,
-        payer_pubkey: &Pubkey,
-    ) -> Result<String> {
-
-        let message = VersionedMessage::Legacy(Message::new(
-            &self.instructions,
-            Some(payer_pubkey),
-        ));
+    pub fn compile_to_versioned_transaction_b64(&self, payer_pubkey: Pubkey) -> Result<String> {
+        let message =
+            VersionedMessage::Legacy(Message::new(&self.instructions, Some(&payer_pubkey)));
 
         let signers: Vec<&Keypair> = self.signers.values().collect();
 
@@ -114,9 +107,9 @@ impl TransactionBuilder {
     fn add_signer_if_keypair(&mut self, potential_signer: KeypairOrPublickey) {
         if potential_signer.can_sign() {
             let pubkey = potential_signer.pubkey();
-            if !self.signers.contains_key(&pubkey) {
+            if let Entry::Vacant(e) = self.signers.entry(pubkey) {
                 if let Some(keypair) = potential_signer.into_keypair() {
-                    self.signers.insert(pubkey, keypair);
+                    e.insert(keypair);
                 }
             }
         }
@@ -199,12 +192,12 @@ impl TransactionBuilder {
         let ix = create_update_asset_data_instruction(
             &signer.pubkey(),
             vault_id,
-            mint,
+            &mint,
             allow_deposits,
             allow_withdrawals,
             share_premium_bps,
             is_pegged_to_base_asset,
-            price_feed,
+            &price_feed,
             inverse_price_feed,
             max_staleness,
             min_samples,
@@ -228,7 +221,7 @@ impl TransactionBuilder {
         let ix = create_deposit_sol_instruction(
             &signer.pubkey(),
             vault_id,
-            user_pubkey,
+            &user_pubkey,
             deposit_amount,
             min_mint_amount,
         )?;

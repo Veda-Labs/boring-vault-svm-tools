@@ -1,3 +1,4 @@
+use crate::impl_external_instruction_common;
 use crate::manage_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::pdas;
@@ -28,13 +29,7 @@ impl SolendInitObligation {
 }
 
 impl ExternalInstruction for SolendInitObligation {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         SOLEND_PROGRAM_ID
@@ -117,13 +112,7 @@ impl SolendDepositReserveLiquidityAndObligationCollateral {
 }
 
 impl ExternalInstruction for SolendDepositReserveLiquidityAndObligationCollateral {
-    fn vault_id(&self) -> u64 {
-        self.vault_id
-    }
-
-    fn sub_account(&self) -> u8 {
-        self.sub_account
-    }
+    impl_external_instruction_common!();
 
     fn ix_program_id(&self) -> Pubkey {
         pubkey!("So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo")
