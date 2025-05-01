@@ -57,32 +57,25 @@ impl TransactionBuilder {
     }
 
     pub fn try_bundle_all(&mut self, payer: Keypair) -> Result<String> {
-        // 1. Add payer to signers if not present (needed for compile_... later)
         let payer_pubkey = payer.pubkey();
         if !self.signers.contains_key(&payer.pubkey()) {
             self.signers.insert(payer_pubkey, payer);
         }
 
-        // 2. Compile the transaction using the new method
         let b64_tx = self.compile_to_versioned_transaction_b64(payer_pubkey)?;
 
-        // 3. Decode Base64
         let serialized_tx = STANDARD.decode(&b64_tx)?;
 
-        // 4. Deserialize the transaction using bincode v1
         let mut versioned_tx: VersionedTransaction = bincode::deserialize(&serialized_tx)?;
 
         let recent_blockhash = self.client.get_latest_blockhash()?;
         versioned_tx.message.set_recent_blockhash(recent_blockhash);
 
-        // 5. Send the deserialized VersionedTransaction
         let result = self.client.send_and_confirm_transaction(&versioned_tx)?;
 
-        // 6. Clear builder state
         self.instructions.clear();
         self.signers.clear();
 
-        // 7. Return transaction signature
         Ok(result.to_string())
     }
 
@@ -210,6 +203,184 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    pub fn pause(&mut self, signer: KeypairOrPublickey, vault_id: u64) -> Result<()> {
+        let ix = create_pause_instruction(vault_id, &signer.pubkey())?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn unpause(&mut self, signer: KeypairOrPublickey, vault_id: u64) -> Result<()> {
+        let ix = create_unpause_instruction(vault_id, &signer.pubkey())?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn transfer_authority(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        pending_authority: Pubkey,
+    ) -> Result<()> {
+        let ix =
+            create_transfer_authority_instruction(vault_id, &signer.pubkey(), &pending_authority)?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn accept_authority(&mut self, signer: KeypairOrPublickey, vault_id: u64) -> Result<()> {
+        let ix = create_accept_authority_instruction(vault_id, &signer.pubkey())?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn close_cpi_digest(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        digest: [u8; 32],
+    ) -> Result<()> {
+        let ix = create_close_cpi_digest_instruction(vault_id, &signer.pubkey(), digest)?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn update_exchange_rate_provider(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        new_provider: Pubkey,
+    ) -> Result<()> {
+        let ix = create_update_exchange_rate_provider_instruction(
+            vault_id,
+            &signer.pubkey(),
+            &new_provider,
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn set_withdraw_authority(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        new_authority: Pubkey,
+    ) -> Result<()> {
+        let ix =
+            create_set_withdraw_authority_instruction(vault_id, &signer.pubkey(), &new_authority)?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn set_payout(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        new_payout: Pubkey,
+    ) -> Result<()> {
+        let ix = create_set_payout_instruction(vault_id, &signer.pubkey(), &new_payout)?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn configure_exchange_rate_update_bounds(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        upper_bound: u16,
+        lower_bound: u16,
+        minimum_update_delay: u32,
+    ) -> Result<()> {
+        let ix = create_configure_exchange_rate_update_bounds_instruction(
+            vault_id,
+            &signer.pubkey(),
+            upper_bound,
+            lower_bound,
+            minimum_update_delay,
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn set_fees(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        platform_fee_bps: u16,
+        performance_fee_bps: u16,
+    ) -> Result<()> {
+        let ix = create_set_fees_instruction(
+            vault_id,
+            &signer.pubkey(),
+            platform_fee_bps,
+            performance_fee_bps,
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn set_strategist(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        new_strategist: Pubkey,
+    ) -> Result<()> {
+        let ix = create_set_strategist_instruction(vault_id, &signer.pubkey(), &new_strategist)?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn claim_fees_in_base(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        sub_account: u8,
+    ) -> Result<()> {
+        let ix = create_claim_fees_in_base_instruction(
+            &self.client,
+            vault_id,
+            sub_account,
+            &signer.pubkey(),
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
     pub fn deposit_sol(
         &mut self,
         signer: KeypairOrPublickey,
@@ -227,6 +398,67 @@ impl TransactionBuilder {
         )?;
 
         // Add instruction
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn deposit(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        deposit_mint: Pubkey,
+        deposit_amount: u64,
+        min_mint_amount: u64,
+    ) -> Result<()> {
+        let ix = create_deposit_instruction(
+            &self.client,
+            vault_id,
+            &signer.pubkey(),
+            &deposit_mint,
+            deposit_amount,
+            min_mint_amount,
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn withdraw(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        withdraw_mint: Pubkey,
+        share_amount: u64,
+        min_asset_amount: u64,
+    ) -> Result<()> {
+        let ix = create_withdraw_instruction(
+            &self.client,
+            vault_id,
+            &signer.pubkey(),
+            &withdraw_mint,
+            share_amount,
+            min_asset_amount,
+        )?;
+
+        self.instructions.push(ix);
+        self.add_signer_if_keypair(signer);
+
+        Ok(())
+    }
+
+    pub fn update_exchange_rate(
+        &mut self,
+        signer: KeypairOrPublickey,
+        vault_id: u64,
+        new_exchange_rate: u64,
+    ) -> Result<()> {
+        let ix =
+            create_update_exchange_rate_instruction(vault_id, &signer.pubkey(), new_exchange_rate)?;
+
         self.instructions.push(ix);
         self.add_signer_if_keypair(signer);
 

@@ -8,7 +8,7 @@ import json
 # Default funded keypair
 def get_default_keypair_secret():
     home = str(Path.home())
-    with open(f"{home}/.config/solana/veda.json", "r") as f:
+    with open(f"{home}/.config/solana/id.json", "r") as f:
         secret_key_data = json.load(f)
         return bytes(secret_key_data)
 
@@ -25,7 +25,7 @@ async def main():
         # Create builder
         print("Creating builder...")
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
-        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
+        builder = boring_vault_svm.TransactionBuilder("https://solana-mainnet.g.alchemy.com/v2/NhUn5DbOXuljZZ2xciqQek0-NhYJnsD6")
 
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
@@ -70,6 +70,103 @@ async def main():
         #         min_samples=0,     # min_samples
         # )
 
+        print("Pausing vault...")
+        builder.pause(
+            signer_bytes=signer_bytes,
+            vault_id=3
+        )
+        
+        # print("Unpausing vault...")
+        # builder.unpause(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id
+        # )
+
+        # print("Transferring authority...")
+        # new_pending_authority = "NEW_PENDING_AUTHORITY_PUBKEY"
+        # builder.transfer_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     pending_authority=new_pending_authority
+        # )
+
+        # print("Accepting authority...")
+        # builder.accept_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id
+        # )
+
+        # print("Closing CPI digest...")
+        # digest = [0] * 32  # Replace with actual digest bytes
+        # builder.close_cpi_digest(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     digest=digest
+        # )
+
+        # print("Updating exchange rate provider...")
+        # new_provider = "NEW_PROVIDER_PUBKEY"
+        # builder.update_exchange_rate_provider(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     new_provider=new_provider
+        # )
+
+        # print("Configuring exchange rate update bounds...")
+        # builder.configure_exchange_rate_update_bounds(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     upper_bound=10500,  # 105% (in basis points)
+        #     lower_bound=9500,   # 95% (in basis points)
+        #     minimum_update_delay=3600  # 1 hour in seconds
+        # )
+
+        # print("Updating exchange rate...")
+        # builder.update_exchange_rate(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     new_exchange_rate=1_050_000_000  # 1.05 with 9 decimals
+        # )
+
+        # print("Setting fees...")
+        # builder.set_fees(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     platform_fee_bps=50,    # 0.5% annual fee
+        #     performance_fee_bps=2000 # 20% performance fee
+        # )
+
+        # print("Setting payout address...")
+        # new_payout = "NEW_PAYOUT_ADDRESS_PUBKEY"
+        # builder.set_payout(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     new_payout=new_payout
+        # )
+
+        # print("Claiming fees in base asset...")
+        # builder.claim_fees_in_base(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     sub_account=0
+        # )
+
+        # print("Setting withdraw authority...")
+        # new_withdraw_authority = "NEW_WITHDRAW_AUTHORITY_PUBKEY"
+        # builder.set_withdraw_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     new_authority=new_withdraw_authority
+        # )
+
+        # print("Setting strategist...")
+        # new_strategist = "NEW_STRATEGIST_PUBKEY"
+        # builder.set_strategist(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     new_strategist=new_strategist
+        # )
+
         # print("Depositing SOL...")
         # builder.deposit_sol(
         #     signer_bytes=signer_bytes,
@@ -79,23 +176,44 @@ async def main():
         #     min_mint_amount=0,          # min_mint_amount
         # )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        # print("Depositing tokens...")
+        # token_mint = "TOKEN_MINT_PUBKEY"
+        # builder.deposit(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     deposit_mint=token_mint,
+        #     deposit_amount=1_000_000,
+        #     min_mint_amount=0
+        # )
 
-        print("Transferring SOL from sub account 0 to sub account 1")
-        builder.manage_transfer_sol_between_sub_accounts(
-            signer_bytes=signer_bytes,
-            authority_bytes=None,  # or None if no authority needed
-            vault_id=3,  # your vault ID
-            sub_account=0,  # source sub account
-            to_sub_account=2,  # destination sub account
-            amount=10000  # amount in lamports
-        )
+        # print("Withdrawing tokens...")
+        # withdraw_mint = "TOKEN_MINT_PUBKEY"
+        # builder.withdraw(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     withdraw_mint=withdraw_mint,
+        #     share_amount=500_000,
+        #     min_asset_amount=0
+        # )
 
         print("Sending instructions as one bundle...")
         tx_hash = builder.try_bundle_all(signer_bytes)
         print(f"Success! Transaction hash: {tx_hash}")
+
+
+        # print("Transferring SOL from sub account 0 to sub account 1")
+        # builder.manage_transfer_sol_between_sub_accounts(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=None,  # or None if no authority needed
+        #     vault_id=3,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     to_sub_account=2,  # destination sub account
+        #     amount=10000  # amount in lamports
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting deposit sub-account...")
         # builder.set_deposit_sub_account(

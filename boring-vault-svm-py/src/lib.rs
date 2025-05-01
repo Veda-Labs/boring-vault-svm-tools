@@ -159,6 +159,185 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    fn pause(&mut self, signer_bytes: &[u8], vault_id: u64) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .pause(signer, vault_id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn unpause(&mut self, signer_bytes: &[u8], vault_id: u64) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .unpause(signer, vault_id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn transfer_authority(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        pending_authority: String,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let pending_authority_pubkey = to_pubkey_from_string(pending_authority)?;
+
+        self.inner
+            .transfer_authority(signer, vault_id, pending_authority_pubkey)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn accept_authority(&mut self, signer_bytes: &[u8], vault_id: u64) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .accept_authority(signer, vault_id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn close_cpi_digest(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        digest: [u8; 32],
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .close_cpi_digest(signer, vault_id, digest)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn update_exchange_rate_provider(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_provider: String,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let new_provider_pubkey = to_pubkey_from_string(new_provider)?;
+
+        self.inner
+            .update_exchange_rate_provider(signer, vault_id, new_provider_pubkey)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn set_withdraw_authority(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_authority: String,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let new_authority_pubkey = to_pubkey_from_string(new_authority)?;
+
+        self.inner
+            .set_withdraw_authority(signer, vault_id, new_authority_pubkey)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn set_payout(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_payout: String,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let new_payout_pubkey = to_pubkey_from_string(new_payout)?;
+
+        self.inner
+            .set_payout(signer, vault_id, new_payout_pubkey)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn configure_exchange_rate_update_bounds(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        upper_bound: u16,
+        lower_bound: u16,
+        minimum_update_delay: u32,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .configure_exchange_rate_update_bounds(
+                signer,
+                vault_id,
+                upper_bound,
+                lower_bound,
+                minimum_update_delay,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn set_fees(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        platform_fee_bps: u16,
+        performance_fee_bps: u16,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .set_fees(signer, vault_id, platform_fee_bps, performance_fee_bps)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn set_strategist(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_strategist: String,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let new_strategist_pubkey = to_pubkey_from_string(new_strategist)?;
+
+        self.inner
+            .set_strategist(signer, vault_id, new_strategist_pubkey)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn claim_fees_in_base(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        sub_account: u8,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .claim_fees_in_base(signer, vault_id, sub_account)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
     fn deposit_sol(
         &mut self,
         signer_bytes: &[u8],
@@ -178,6 +357,69 @@ impl TransactionBuilder {
                 deposit_amount,
                 min_mint_amount,
             )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn deposit(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        deposit_mint: String,
+        deposit_amount: u64,
+        min_mint_amount: u64,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let deposit_mint_pubkey = to_pubkey_from_string(deposit_mint)?;
+
+        self.inner
+            .deposit(
+                signer,
+                vault_id,
+                deposit_mint_pubkey,
+                deposit_amount,
+                min_mint_amount,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn withdraw(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        withdraw_mint: String,
+        share_amount: u64,
+        min_asset_amount: u64,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+        let withdraw_mint_pubkey = to_pubkey_from_string(withdraw_mint)?;
+
+        self.inner
+            .withdraw(
+                signer,
+                vault_id,
+                withdraw_mint_pubkey,
+                share_amount,
+                min_asset_amount,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn update_exchange_rate(
+        &mut self,
+        signer_bytes: &[u8],
+        vault_id: u64,
+        new_exchange_rate: u64,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        self.inner
+            .update_exchange_rate(signer, vault_id, new_exchange_rate)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
