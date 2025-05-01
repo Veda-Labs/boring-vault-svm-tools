@@ -66,10 +66,8 @@ impl TransactionBuilder {
 
         let serialized_tx = STANDARD.decode(&b64_tx)?;
 
-        let mut versioned_tx: VersionedTransaction = bincode::deserialize(&serialized_tx)?;
-
-        let recent_blockhash = self.client.get_latest_blockhash()?;
-        versioned_tx.message.set_recent_blockhash(recent_blockhash);
+        // 4. Deserialize the transaction using bincode v1
+        let versioned_tx: VersionedTransaction = bincode::deserialize(&serialized_tx)?;
 
         let result = self.client.send_and_confirm_transaction(&versioned_tx)?;
 
@@ -84,8 +82,9 @@ impl TransactionBuilder {
     /// and returns the Base64 encoded string.
     /// Does NOT send the transaction or clear the builder state.
     pub fn compile_to_versioned_transaction_b64(&self, payer_pubkey: Pubkey) -> Result<String> {
+        let blockhash = self.client.get_latest_blockhash()?;
         let message =
-            VersionedMessage::Legacy(Message::new(&self.instructions, Some(&payer_pubkey)));
+            VersionedMessage::Legacy(Message::new_with_blockhash(&self.instructions, Some(&payer_pubkey), &blockhash));
 
         let signers: Vec<&Keypair> = self.signers.values().collect();
 

@@ -196,11 +196,6 @@ async def main():
         #     min_asset_amount=0
         # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
-
-
         # print("Transferring SOL from sub account 0 to sub account 1")
         # builder.manage_transfer_sol_between_sub_accounts(
         #     signer_bytes=signer_bytes,

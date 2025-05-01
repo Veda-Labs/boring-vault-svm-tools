@@ -761,7 +761,7 @@ pub fn create_deposit_sol_instruction(
     let vault_state_pda = get_vault_state_pda(vault_id);
     let native_mint = Pubkey::new_from_array([0; 32]);
     let asset_data_pda = get_asset_data_pda(vault_state_pda, native_mint);
-    let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
+    let vault_pda = get_vault_pda(vault_id, 2); // NOTE need to actually read state to see what deposit sub account is
     let share_mint = get_vault_share_mint(vault_state_pda);
     let user_share_ata = get_associated_token_address_with_program_id(
         user_pubkey,
