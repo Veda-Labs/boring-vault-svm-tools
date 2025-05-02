@@ -401,7 +401,7 @@ impl TransactionBuilder {
         )?;
 
         // Add instruction
-        self.instructions.push(ix);
+        self.instructions.extend(ix);
         self.add_signer_if_keypair(signer);
 
         Ok(())
@@ -447,7 +447,7 @@ impl TransactionBuilder {
             min_asset_amount,
         )?;
 
-        self.instructions.push(ix);
+        self.instructions.extend(ix);
         self.add_signer_if_keypair(signer);
 
         Ok(())

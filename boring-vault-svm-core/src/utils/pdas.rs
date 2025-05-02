@@ -1,7 +1,12 @@
 use super::bindings::boring_vault_svm;
 use super::constants::*;
+use eyre::Result;
 use solana_address_lookup_table_interface::instruction::derive_lookup_table_address;
+use solana_client::rpc_client::RpcClient;
+use solana_instruction::Instruction;
 use solana_pubkey::Pubkey;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::instruction::create_associated_token_account;
 
 pub fn get_lut_pda(authority: &Pubkey, recent_block_slot: u64) -> Pubkey {
     let res = derive_lookup_table_address(authority, recent_block_slot);
@@ -87,4 +92,26 @@ pub fn get_obligation(
 
 pub fn get_lending_market_authority(lending_market: &Pubkey, program_id: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[b"lma", lending_market.as_ref()], program_id).0
+}
+
+pub fn ensure_ata(
+    client: &RpcClient,
+    signer: &Pubkey,
+    owner: &Pubkey,
+    mint: &Pubkey,
+    token_program_id: &Pubkey,
+) -> Result<(Pubkey, Option<Instruction>)> {
+    let ata = get_associated_token_address_with_program_id(owner, mint, token_program_id);
+
+    let instruction = match client.get_account(&ata) {
+        Ok(_) => None, // Account exists, no instruction needed
+        Err(_) => Some(create_associated_token_account(
+            signer,
+            owner,
+            mint,
+            token_program_id,
+        )),
+    };
+
+    Ok((ata, instruction))
 }
