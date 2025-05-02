@@ -83,8 +83,11 @@ impl TransactionBuilder {
     /// Does NOT send the transaction or clear the builder state.
     pub fn compile_to_versioned_transaction_b64(&self, payer_pubkey: Pubkey) -> Result<String> {
         let blockhash = self.client.get_latest_blockhash()?;
-        let message =
-            VersionedMessage::Legacy(Message::new_with_blockhash(&self.instructions, Some(&payer_pubkey), &blockhash));
+        let message = VersionedMessage::Legacy(Message::new_with_blockhash(
+            &self.instructions,
+            Some(&payer_pubkey),
+            &blockhash,
+        ));
 
         let signers: Vec<&Keypair> = self.signers.values().collect();
 
@@ -374,7 +377,7 @@ impl TransactionBuilder {
             &signer.pubkey(),
         )?;
 
-        self.instructions.push(ix);
+        self.instructions.extend(ix);
         self.add_signer_if_keypair(signer);
 
         Ok(())
@@ -389,6 +392,7 @@ impl TransactionBuilder {
         min_mint_amount: u64,
     ) -> Result<()> {
         let ix = create_deposit_sol_instruction(
+            &self.client,
             &signer.pubkey(),
             vault_id,
             &user_pubkey,
@@ -411,7 +415,7 @@ impl TransactionBuilder {
         deposit_amount: u64,
         min_mint_amount: u64,
     ) -> Result<()> {
-        let ix = create_deposit_instruction(
+        let ixs = create_deposit_instruction(
             &self.client,
             vault_id,
             &signer.pubkey(),
@@ -420,7 +424,7 @@ impl TransactionBuilder {
             min_mint_amount,
         )?;
 
-        self.instructions.push(ix);
+        self.instructions.extend(ixs);
         self.add_signer_if_keypair(signer);
 
         Ok(())

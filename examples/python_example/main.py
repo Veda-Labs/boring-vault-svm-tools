@@ -59,41 +59,41 @@ async def main():
         # builder.update_asset_data(
         #         signer_bytes=signer_bytes,
         #         vault_id=3,
-        #         mint="11111111111111111111111111111111",
+        #         mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
         #         allow_deposits=True,  # allow_deposits
         #         allow_withdrawals=True,  # allow_withdrawals
         #         share_premium_bps=0,     # share_premium_bps
-        #         is_pegged_to_base_asset=True, # is_pegged_to_base_asset
-        #         price_feed="11111111111111111111111111111111",
+        #         is_pegged_to_base_asset=False, # is_pegged_to_base_asset
+        #         price_feed="4Z1SLH9g4ikNBV8uP2ZctEouqjYmVqB2Tz5SZxKYBN7z",
         #         inverse_price_feed=False, # inverse_price_feed
-        #         max_staleness=0,    # max_staleness
-        #         min_samples=0,     # min_samples
+        #         max_staleness=150,    # max_staleness
+        #         min_samples=3,     # min_samples
         # )
 
-        print("Pausing vault...")
-        builder.pause(
-            signer_bytes=signer_bytes,
-            vault_id=3
-        )
+        # print("Pausing vault...")
+        # builder.pause(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3
+        # )
         
         # print("Unpausing vault...")
         # builder.unpause(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id
+        #     vault_id=3
         # )
 
         # print("Transferring authority...")
-        # new_pending_authority = "NEW_PENDING_AUTHORITY_PUBKEY"
+        # new_pending_authority = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
         # builder.transfer_authority(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     pending_authority=new_pending_authority
         # )
 
         # print("Accepting authority...")
         # builder.accept_authority(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id
+        #     vault_id=3
         # )
 
         # print("Closing CPI digest...")
@@ -105,65 +105,65 @@ async def main():
         # )
 
         # print("Updating exchange rate provider...")
-        # new_provider = "NEW_PROVIDER_PUBKEY"
+        # new_provider = "31Uys8oYqNAiRUKR9i24qLaG5ninMFuXckpkfV3FaPDp"
         # builder.update_exchange_rate_provider(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     new_provider=new_provider
         # )
 
         # print("Configuring exchange rate update bounds...")
         # builder.configure_exchange_rate_update_bounds(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     upper_bound=10500,  # 105% (in basis points)
         #     lower_bound=9500,   # 95% (in basis points)
-        #     minimum_update_delay=3600  # 1 hour in seconds
+        #     minimum_update_delay=4200  # 1 hour in seconds
         # )
 
         # print("Updating exchange rate...")
         # builder.update_exchange_rate(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     new_exchange_rate=1_050_000_000  # 1.05 with 9 decimals
         # )
 
         # print("Setting fees...")
         # builder.set_fees(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
-        #     platform_fee_bps=50,    # 0.5% annual fee
-        #     performance_fee_bps=2000 # 20% performance fee
+        #     vault_id=3,
+        #     platform_fee_bps=50,    # 0.5% platform fee
+        #     performance_fee_bps=100 # 1% performance fee
         # )
 
         # print("Setting payout address...")
-        # new_payout = "NEW_PAYOUT_ADDRESS_PUBKEY"
+        # new_payout = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
         # builder.set_payout(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     new_payout=new_payout
         # )
 
         # print("Claiming fees in base asset...")
         # builder.claim_fees_in_base(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     sub_account=0
         # )
 
         # print("Setting withdraw authority...")
-        # new_withdraw_authority = "NEW_WITHDRAW_AUTHORITY_PUBKEY"
+        # new_withdraw_authority = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
         # builder.set_withdraw_authority(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     new_authority=new_withdraw_authority
         # )
 
         # print("Setting strategist...")
-        # new_strategist = "NEW_STRATEGIST_PUBKEY"
+        # new_strategist = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
         # builder.set_strategist(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     new_strategist=new_strategist
         # )
 
@@ -177,22 +177,22 @@ async def main():
         # )
 
         # print("Depositing tokens...")
-        # token_mint = "TOKEN_MINT_PUBKEY"
+        # token_mint = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
         # builder.deposit(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     deposit_mint=token_mint,
-        #     deposit_amount=1_000_000,
+        #     deposit_amount=1_000,
         #     min_mint_amount=0
         # )
 
         # print("Withdrawing tokens...")
-        # withdraw_mint = "TOKEN_MINT_PUBKEY"
+        # withdraw_mint = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
         # builder.withdraw(
         #     signer_bytes=signer_bytes,
-        #     vault_id=vault_id,
+        #     vault_id=3,
         #     withdraw_mint=withdraw_mint,
-        #     share_amount=500_000,
+        #     share_amount=1_000,
         #     min_asset_amount=0
         # )
 
@@ -206,9 +206,9 @@ async def main():
         #     amount=10000  # amount in lamports
         # )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting deposit sub-account...")
         # builder.set_deposit_sub_account(

@@ -7,6 +7,7 @@ use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
 use solana_sdk::hash::hash;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::instruction::create_associated_token_account;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
@@ -426,7 +427,7 @@ pub fn create_claim_fees_in_base_instruction(
     vault_id: u64,
     sub_account: u8,
     signer: &Pubkey,
-) -> Result<Instruction> {
+) -> Result<Vec<Instruction>> {
     let vault_state_pda = get_vault_state_pda(vault_id);
     let vault_pda = get_vault_pda(vault_id, sub_account);
     let vault_state_account = client.get_account(&vault_state_pda)?;
@@ -445,8 +446,27 @@ pub fn create_claim_fees_in_base_instruction(
         &token_program_id,
     );
 
+    let mut instructions = vec![];
+    if let Err(_) = client.get_account(&payout_ata) {
+        instructions.push(create_associated_token_account(
+            signer,
+            &payout_address,
+            &base_asset,
+            &token_program_id,
+        ));
+    } 
+
     let vault_ata =
         get_associated_token_address_with_program_id(&vault_pda, &base_asset, &token_program_id);
+
+    if let Err(_) = client.get_account(&vault_ata) {
+        instructions.push(create_associated_token_account(
+            signer,
+            &vault_pda,
+            &base_asset,
+            &token_program_id,
+        ));
+    }
 
     let accounts = boring_vault_svm::client::accounts::ClaimFeesInBase {
         signer: *signer,
@@ -472,7 +492,9 @@ pub fn create_claim_fees_in_base_instruction(
         data: claim_fees_in_base_ix_data,
     };
 
-    Ok(instruction)
+    instructions.push(instruction);
+
+    Ok(instructions)
 }
 
 pub fn create_deposit_instruction(
@@ -482,15 +504,14 @@ pub fn create_deposit_instruction(
     deposit_mint: &Pubkey,
     deposit_amount: u64,
     min_mint_amount: u64,
-) -> Result<Instruction> {
+) -> Result<Vec<Instruction>> {
     let vault_state_pda = get_vault_state_pda(vault_id);
     let vault_state_account = client.get_account(&vault_state_pda)?;
     let vault_state = boring_vault_svm::accounts::BoringVault::try_deserialize(
         &mut &vault_state_account.data[..],
     )?;
 
-    let deposit_sub_account = vault_state.config.deposit_sub_account;
-    let vault_pda = get_vault_pda(vault_id, deposit_sub_account);
+    let vault_pda = get_vault_pda(vault_id, vault_state.config.deposit_sub_account);
     let share_mint = get_vault_share_mint(vault_state_pda);
 
     let asset_data_pda = get_asset_data_pda(vault_state_pda, *deposit_mint);
@@ -502,14 +523,43 @@ pub fn create_deposit_instruction(
     let deposit_mint_account = client.get_account(deposit_mint)?;
     let token_program_id = deposit_mint_account.owner;
 
+    let mut instructions = vec![];
+
     let user_ata =
         get_associated_token_address_with_program_id(signer, deposit_mint, &token_program_id);
+
+    if let Err(_) = client.get_account(&user_ata) {
+        instructions.push(create_associated_token_account(
+            signer,
+            &signer,
+            &deposit_mint,
+            &token_program_id,
+            ));
+        }
 
     let vault_ata =
         get_associated_token_address_with_program_id(&vault_pda, deposit_mint, &token_program_id);
 
+    if let Err(_) = client.get_account(&vault_ata) {
+        instructions.push(create_associated_token_account(
+            signer,
+            &vault_pda,
+            &deposit_mint,
+            &token_program_id,
+        ));
+    }
+
     let user_share_ata =
         get_associated_token_address_with_program_id(signer, &share_mint, &TOKEN_2022_PROGRAM_ID);
+
+    if let Err(_) = client.get_account(&user_share_ata) {
+        instructions.push(create_associated_token_account(
+            signer,
+            &signer,
+            &share_mint,
+            &TOKEN_2022_PROGRAM_ID,
+        ));
+    }
 
     let accounts = boring_vault_svm::client::accounts::Deposit {
         signer: *signer,
@@ -542,7 +592,9 @@ pub fn create_deposit_instruction(
         data: deposit_ix_data,
     };
 
-    Ok(instruction)
+    instructions.push(instruction);
+
+    Ok(instructions)
 }
 
 pub fn create_withdraw_instruction(
@@ -752,6 +804,7 @@ pub fn create_update_asset_data_instruction(
 }
 
 pub fn create_deposit_sol_instruction(
+    client: &RpcClient,
     signer: &Pubkey,
     vault_id: u64,
     user_pubkey: &Pubkey,
@@ -759,9 +812,13 @@ pub fn create_deposit_sol_instruction(
     min_mint_amount: u64,
 ) -> Result<Instruction> {
     let vault_state_pda = get_vault_state_pda(vault_id);
+    let vault_state_account = client.get_account(&vault_state_pda)?;
+    let vault_state_data = boring_vault_svm::accounts::BoringVault::try_deserialize(
+        &mut &vault_state_account.data[..],
+    )?;
     let native_mint = Pubkey::new_from_array([0; 32]);
     let asset_data_pda = get_asset_data_pda(vault_state_pda, native_mint);
-    let vault_pda = get_vault_pda(vault_id, 2); // NOTE need to actually read state to see what deposit sub account is
+    let vault_pda = get_vault_pda(vault_id, vault_state_data.config.deposit_sub_account);
     let share_mint = get_vault_share_mint(vault_state_pda);
     let user_share_ata = get_associated_token_address_with_program_id(
         user_pubkey,
