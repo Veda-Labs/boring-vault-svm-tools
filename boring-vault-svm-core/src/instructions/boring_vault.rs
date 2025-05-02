@@ -20,8 +20,6 @@ use crate::{
     },
 };
 
-// ADMIN INSTRUCTIONS
-
 pub fn create_initialize_instruction(authority: &Pubkey, signer: &Pubkey) -> Result<Instruction> {
     let accounts = vec![
         AccountMeta::new(*signer, true),
