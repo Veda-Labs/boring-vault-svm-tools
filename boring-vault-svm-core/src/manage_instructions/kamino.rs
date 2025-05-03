@@ -71,7 +71,6 @@ impl ExternalInstruction for KaminoInitUserMetaData {
 pub struct KaminoInitObligation {
     vault_id: u64,
     sub_account: u8,
-    user_metadata: Pubkey,
     lending_market: Pubkey,
     tag: u8,
     id: u8,
@@ -81,7 +80,6 @@ impl KaminoInitObligation {
     pub fn new(
         vault_id: u64,
         sub_account: u8,
-        user_metadata: Pubkey,
         lending_market: Pubkey,
         tag: u8,
         id: u8,
@@ -89,7 +87,6 @@ impl KaminoInitObligation {
         Self {
             vault_id,
             sub_account,
-            user_metadata,
             lending_market,
             tag,
             id,
@@ -114,6 +111,7 @@ impl ExternalInstruction for KaminoInitObligation {
 
     fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
         let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let user_metadata = pdas::get_user_metadata_pda(&owner, &self.ix_program_id());
         let ix_remaining_accounts = vec![
             AccountMeta::new(owner, false), // obligation owner
             AccountMeta::new(owner, false), // fee_payer
@@ -132,7 +130,7 @@ impl ExternalInstruction for KaminoInitObligation {
             AccountMeta::new_readonly(self.lending_market, false), // lending market
             AccountMeta::new_readonly(system_program::ID, false), // seed_1
             AccountMeta::new_readonly(system_program::ID, false), // seed_2
-            AccountMeta::new(self.user_metadata, false), // owner user metadata
+            AccountMeta::new(user_metadata, false), // owner user metadata
             AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
             AccountMeta::new_readonly(system_program::ID, false), // system program
             AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id

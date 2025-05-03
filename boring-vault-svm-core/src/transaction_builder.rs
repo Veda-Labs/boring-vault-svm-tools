@@ -579,7 +579,6 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        user_metadata: Pubkey,
         lending_market: Pubkey,
         tag: u8,
         id: u8,
@@ -587,7 +586,6 @@ impl TransactionBuilder {
         let eix = KaminoInitObligation::new(
             vault_id,
             sub_account,
-            user_metadata,
             lending_market,
             tag,
             id,

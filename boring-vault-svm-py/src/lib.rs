@@ -512,7 +512,6 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        user_metadata: String,
         lending_market: String,
         tag: u8,
         id: u8,
@@ -524,7 +523,6 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let user_metadata_pubkey = to_pubkey_from_string(user_metadata)?;
         let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
 
         self.inner
@@ -533,7 +531,6 @@ impl TransactionBuilder {
                 authority,
                 vault_id,
                 sub_account,
-                user_metadata_pubkey,
                 lending_market_pubkey,
                 tag,
                 id,
