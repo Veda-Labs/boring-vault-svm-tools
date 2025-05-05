@@ -4,7 +4,6 @@ use boring_vault_svm_core::KeypairOrPublickey;
 use pyo3::prelude::*;
 // use pyo3::wrap_pyfunction;
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
 use utils::{to_keypair_from_bytes, to_pubkey_from_string};
 
 mod utils;
@@ -21,9 +20,11 @@ struct TransactionBuilder {
 #[pymethods]
 impl TransactionBuilder {
     #[new]
-    fn new(rpc_url: String) -> Self {
+    fn new(market: &str, rpc_url: String) -> Self {
         Self {
-            inner: boring_vault_svm_core::transaction_builder::TransactionBuilder::new(rpc_url),
+            inner: boring_vault_svm_core::transaction_builder::TransactionBuilder::new(
+                market, rpc_url,
+            ),
         }
     }
 
@@ -512,7 +513,6 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: String,
         tag: u8,
         id: u8,
     ) -> PyResult<()> {
@@ -523,18 +523,8 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-
         self.inner
-            .init_obligation(
-                signer,
-                authority,
-                vault_id,
-                sub_account,
-                lending_market_pubkey,
-                tag,
-                id,
-            )
+            .init_obligation(signer, authority, vault_id, sub_account, tag, id)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
@@ -546,10 +536,6 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        reserve: String,
-        reserve_farm_state: String,
-        lending_market: String,
-        delegatee: Option<String>,
         tag: Option<u8>,
         id: Option<u8>,
         mode: u8,
@@ -561,24 +547,12 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let reserve_pubkey = to_pubkey_from_string(reserve)?;
-        let reserve_farm_state_pubkey = to_pubkey_from_string(reserve_farm_state)?;
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let delegatee_pubkey = match delegatee {
-            Some(bytes) => Some(to_pubkey_from_string(bytes)?),
-            None => None,
-        };
-
         self.inner
             .init_obligation_farms_for_reserve(
                 signer,
                 authority,
                 vault_id,
                 sub_account,
-                reserve_pubkey,
-                reserve_farm_state_pubkey,
-                lending_market_pubkey,
-                delegatee_pubkey,
                 tag,
                 id,
                 mode,
@@ -594,12 +568,6 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        reserve: String,
-        lending_market: String,
-        pyth_oracle: String,
-        switchboard_price_oracle: String,
-        switchboard_twap_oracle: String,
-        scope_prices: String,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
@@ -608,26 +576,8 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let reserve_pubkey = to_pubkey_from_string(reserve)?;
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let pyth_oracle_pubkey = to_pubkey_from_string(pyth_oracle)?;
-        let switchboard_price_oracle_pubkey = to_pubkey_from_string(switchboard_price_oracle)?;
-        let switchboard_twap_oracle_pubkey = to_pubkey_from_string(switchboard_twap_oracle)?;
-        let scope_prices_pubkey = to_pubkey_from_string(scope_prices)?;
-
         self.inner
-            .refresh_reserve(
-                signer,
-                authority,
-                vault_id,
-                sub_account,
-                reserve_pubkey,
-                lending_market_pubkey,
-                pyth_oracle_pubkey,
-                switchboard_price_oracle_pubkey,
-                switchboard_twap_oracle_pubkey,
-                scope_prices_pubkey,
-            )
+            .refresh_reserve(signer, authority, vault_id, sub_account)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
@@ -639,8 +589,8 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: String,
-        obligation: String,
+        tag: u8,
+        id: u8,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
@@ -649,18 +599,8 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let obligation_pubkey = to_pubkey_from_string(obligation)?;
-
         self.inner
-            .refresh_obligation(
-                signer,
-                authority,
-                vault_id,
-                sub_account,
-                lending_market_pubkey,
-                obligation_pubkey,
-            )
+            .refresh_obligation(signer, authority, vault_id, sub_account, tag, id)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
@@ -672,12 +612,8 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        obligation: String,
-        reserve: String,
-        reserve_farm_state: String,
-        obligation_farm: String,
-        lending_market: String,
-        farms_program: String,
+        tag: u8,
+        id: u8,
         mode: u8,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
@@ -687,25 +623,14 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let obligation_pubkey = to_pubkey_from_string(obligation)?;
-        let reserve_pubkey = to_pubkey_from_string(reserve)?;
-        let reserve_farm_state_pubkey = to_pubkey_from_string(reserve_farm_state)?;
-        let obligation_farm_pubkey = to_pubkey_from_string(obligation_farm)?;
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let farms_program_pubkey = to_pubkey_from_string(farms_program)?;
-
         self.inner
             .refresh_obligation_farms_for_reserve(
                 signer,
                 authority,
                 vault_id,
                 sub_account,
-                obligation_pubkey,
-                reserve_pubkey,
-                reserve_farm_state_pubkey,
-                obligation_farm_pubkey,
-                lending_market_pubkey,
-                farms_program_pubkey,
+                tag,
+                id,
                 mode,
             )
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
@@ -716,43 +641,13 @@ impl TransactionBuilder {
     fn manage_kamino_refresh_price_list(
         &mut self,
         signer_bytes: &[u8],
-        authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        oracle_prices: String,
-        oracle_mapping: String,
-        oracle_twaps: String,
-        price_accounts: Vec<String>,
-        tokens: Vec<u16>,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
 
-        let authority = match authority_bytes {
-            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
-            None => None,
-        };
-
-        let oracle_prices_pubkey = to_pubkey_from_string(oracle_prices)?;
-        let oracle_mapping_pubkey = to_pubkey_from_string(oracle_mapping)?;
-        let oracle_twaps_pubkey = to_pubkey_from_string(oracle_twaps)?;
-
-        let price_accounts_pubkeys: Vec<Pubkey> = price_accounts
-            .iter()
-            .map(|s| to_pubkey_from_string(s.to_string()).unwrap())
-            .collect();
-
         self.inner
-            .refresh_price_list(
-                signer,
-                authority,
-                vault_id,
-                sub_account,
-                oracle_prices_pubkey,
-                oracle_mapping_pubkey,
-                oracle_twaps_pubkey,
-                price_accounts_pubkeys,
-                tokens,
-            )
+            .refresh_price_list(signer, vault_id, sub_account)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
@@ -764,13 +659,8 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: String,
-        obligation: String,
-        reserve: String,
-        reserve_liquidity_mint: String,
-        reserve_liquidity_supply: String,
-        reserve_collateral_mint: String,
-        reserve_destination_deposit_collateral: String,
+        tag: u8,
+        id: u8,
         amount: u64,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
@@ -780,30 +670,8 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let obligation_pubkey = to_pubkey_from_string(obligation)?;
-        let reserve_pubkey = to_pubkey_from_string(reserve)?;
-        let reserve_liquidity_mint_pubkey = to_pubkey_from_string(reserve_liquidity_mint)?;
-        let reserve_liquidity_supply_pubkey = to_pubkey_from_string(reserve_liquidity_supply)?;
-        let reserve_collateral_mint_pubkey = to_pubkey_from_string(reserve_collateral_mint)?;
-        let reserve_destination_deposit_collateral_pubkey =
-            to_pubkey_from_string(reserve_destination_deposit_collateral)?;
-
         self.inner
-            .kamino_deposit(
-                signer,
-                authority,
-                vault_id,
-                sub_account,
-                lending_market_pubkey,
-                obligation_pubkey,
-                reserve_pubkey,
-                reserve_liquidity_mint_pubkey,
-                reserve_liquidity_supply_pubkey,
-                reserve_collateral_mint_pubkey,
-                reserve_destination_deposit_collateral_pubkey,
-                amount,
-            )
+            .kamino_deposit(signer, authority, vault_id, sub_account, tag, id, amount)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())

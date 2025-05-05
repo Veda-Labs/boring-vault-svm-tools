@@ -1,8 +1,9 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use crate::manage_instructions::{kamino::*, system::*};
-use crate::utils::{get_lut_pda, get_vault_pda};
+use crate::utils::{get_lut_pda, get_vault_pda, load_json};
 use crate::{instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -21,35 +22,85 @@ pub struct TransactionBuilder {
     client: RpcClient,
     instructions: Vec<Instruction>,
     signers: HashMap<Pubkey, Keypair>,
+    reserve: Pubkey,
+    reserve_farm_state: Pubkey,
+    reserve_liquidity_mint: Pubkey,
+    reserve_liquidity_supply: Pubkey,
+    reserve_collateral_mint: Pubkey,
+    reserve_destination_deposit_collateral: Pubkey,
+    lending_market: Pubkey,
+    oracle_prices: Pubkey,
+    oracle_mapping: Pubkey,
+    oracle_twaps: Pubkey,
+    price_accounts: Vec<Pubkey>,
+    tokens: Vec<u16>,
 }
 
 impl TransactionBuilder {
-    pub fn new(rpc_url: String) -> Self {
+    pub fn new(market: &str, rpc_url: String) -> Self {
         let client = RpcClient::new(rpc_url);
 
         let instructions = vec![];
         let signers = HashMap::new();
+        let data = load_json(market, "../../data/kamino.json").unwrap();
+
+        let reserve = Pubkey::from_str(data["reserve"].as_str().unwrap()).unwrap();
+        let reserve_farm_state =
+            Pubkey::from_str(data["reserve_farm_state"].as_str().unwrap()).unwrap();
+
+        let reserve_liquidity_mint =
+            Pubkey::from_str(data["reserve_liquidity_mint"].as_str().unwrap()).unwrap();
+        let reserve_liquidity_supply =
+            Pubkey::from_str(data["reserve_liquidity_supply"].as_str().unwrap()).unwrap();
+        let reserve_collateral_mint =
+            Pubkey::from_str(data["reserve_collateral_mint"].as_str().unwrap()).unwrap();
+        let reserve_destination_deposit_collateral = Pubkey::from_str(
+            data["reserve_destination_deposit_collateral"]
+                .as_str()
+                .unwrap(),
+        )
+        .unwrap();
+
+        let lending_market = Pubkey::from_str(data["lending_market"].as_str().unwrap()).unwrap();
+
+        let oracle_prices = Pubkey::from_str(data["oracle_prices"].as_str().unwrap()).unwrap();
+        let oracle_mapping = Pubkey::from_str(data["oracle_mapping"].as_str().unwrap()).unwrap();
+        let oracle_twaps = Pubkey::from_str(data["oracle_twaps"].as_str().unwrap()).unwrap();
+
+        let price_accounts: Vec<Pubkey> = data["price_accounts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| Pubkey::from_str(s.as_str().unwrap()).unwrap())
+            .collect();
+
+        let tokens: Vec<u16> = data["tokens"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| s.as_u64().unwrap() as u16)
+            .collect();
+
         Self {
             client,
             instructions,
             signers,
-        }
-    }
-
-    pub fn new_local() -> Self {
-        let client = RpcClient::new("http://127.0.0.1:8899".to_string());
-
-        let instructions = vec![];
-        let signers = HashMap::new();
-        Self {
-            client,
-            instructions,
-            signers,
+            reserve,
+            reserve_farm_state,
+            reserve_liquidity_mint,
+            reserve_liquidity_supply,
+            reserve_collateral_mint,
+            reserve_destination_deposit_collateral,
+            lending_market,
+            oracle_prices,
+            oracle_mapping,
+            oracle_twaps,
+            price_accounts,
+            tokens,
         }
     }
 
     pub fn clear(&mut self) -> Result<()> {
-        // Clear both collections
         self.instructions.clear();
         self.signers.clear();
 
@@ -579,11 +630,10 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: Pubkey,
         tag: u8,
         id: u8,
     ) -> Result<()> {
-        let eix = KaminoInitObligation::new(vault_id, sub_account, lending_market, tag, id);
+        let eix = KaminoInitObligation::new(vault_id, sub_account, self.lending_market, tag, id);
 
         let ixs = match authority.as_ref() {
             Some(authority) => {
@@ -610,10 +660,6 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        reserve: Pubkey,
-        reserve_farm_state: Pubkey,
-        lending_market: Pubkey,
-        delegatee: Option<Pubkey>,
         tag: Option<u8>,
         id: Option<u8>,
         mode: u8,
@@ -621,10 +667,9 @@ impl TransactionBuilder {
         let eix = KaminoInitObligationFarmsForReserve::new(
             vault_id,
             sub_account,
-            reserve,
-            reserve_farm_state,
-            lending_market,
-            delegatee,
+            self.reserve,
+            self.reserve_farm_state,
+            self.lending_market,
             tag.unwrap_or(0),
             id.unwrap_or(0),
             mode,
@@ -655,22 +700,16 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        reserve: Pubkey,
-        lending_market: Pubkey,
-        pyth_oracle: Pubkey,
-        switchboard_price_oracle: Pubkey,
-        switchboard_twap_oracle: Pubkey,
-        scope_prices: Pubkey,
     ) -> Result<()> {
         let eix = KaminoRefreshReserve::new(
             vault_id,
             sub_account,
-            reserve,
-            lending_market,
-            pyth_oracle,
-            switchboard_price_oracle,
-            switchboard_twap_oracle,
-            scope_prices,
+            self.reserve,
+            self.lending_market,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            self.oracle_prices,
         );
 
         let ixs = match authority.as_ref() {
@@ -698,10 +737,10 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: Pubkey,
-        obligation: Pubkey,
+        tag: u8,
+        id: u8,
     ) -> Result<()> {
-        let eix = KaminoRefreshObligation::new(vault_id, sub_account, lending_market, obligation);
+        let eix = KaminoRefreshObligation::new(vault_id, sub_account, self.lending_market, tag, id);
 
         let ixs = match authority.as_ref() {
             Some(authority) => {
@@ -728,23 +767,18 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        obligation: Pubkey,
-        reserve: Pubkey,
-        reserve_farm_state: Pubkey,
-        obligation_farm: Pubkey,
-        lending_market: Pubkey,
-        farms_program: Pubkey,
+        tag: u8,
+        id: u8,
         mode: u8,
     ) -> Result<()> {
         let eix = KaminoRefreshObligationFarmsForReserve::new(
             vault_id,
             sub_account,
-            obligation,
-            reserve,
-            reserve_farm_state,
-            obligation_farm,
-            lending_market,
-            farms_program,
+            self.reserve,
+            self.reserve_farm_state,
+            self.lending_market,
+            tag,
+            id,
             mode,
         );
 
@@ -770,41 +804,32 @@ impl TransactionBuilder {
     pub fn refresh_price_list(
         &mut self,
         signer: KeypairOrPublickey,
-        authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        oracle_prices: Pubkey,
-        oracle_mapping: Pubkey,
-        oracle_twaps: Pubkey,
-        price_accounts: Vec<Pubkey>,
-        tokens: Vec<u16>,
     ) -> Result<()> {
+        let price_accounts = self.price_accounts.clone();
+        let tokens = self.tokens.clone();
+
         let eix = KaminoRefreshPriceList::new(
             vault_id,
             sub_account,
-            oracle_prices,
-            oracle_mapping,
-            oracle_twaps,
+            self.oracle_prices,
+            self.oracle_mapping,
+            self.oracle_twaps,
             price_accounts,
             tokens,
         );
 
-        let ixs = match authority.as_ref() {
-            Some(authority) => {
-                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
-            }
-            None => create_manage_instruction(&self.client, &signer, None, eix)?,
-        };
-
-        for ix in ixs {
-            self.instructions.push(ix);
-        }
+        // This instruction cannot be done by CPI
+        // https://github.com/Kamino-Finance/scope/blob/c97011fffcd0695e4b95f0108e7d2d5aba4c680f/programs/scope/src/handlers/handler_refresh_prices.rs#L173
+        let ix = eix.create_instruction(
+            &self.oracle_prices,
+            &self.oracle_mapping,
+            &self.oracle_twaps,
+        )?;
+        self.instructions.push(ix);
 
         self.add_signer_if_keypair(signer);
-        if let Some(authority) = authority {
-            self.add_signer_if_keypair(authority);
-        }
-
         Ok(())
     }
 
@@ -814,25 +839,21 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        lending_market: Pubkey,
-        obligation: Pubkey,
-        reserve: Pubkey,
-        reserve_liquidity_mint: Pubkey,
-        reserve_liquidity_supply: Pubkey,
-        reserve_collateral_mint: Pubkey,
-        reserve_destination_deposit_collateral: Pubkey,
+        tag: u8,
+        id: u8,
         amount: u64,
     ) -> Result<()> {
         let eix = KaminoDeposit::new(
             vault_id,
             sub_account,
-            lending_market,
-            obligation,
-            reserve,
-            reserve_liquidity_mint,
-            reserve_liquidity_supply,
-            reserve_collateral_mint,
-            reserve_destination_deposit_collateral,
+            self.lending_market,
+            self.reserve,
+            self.reserve_liquidity_mint,
+            self.reserve_liquidity_supply,
+            self.reserve_collateral_mint,
+            self.reserve_destination_deposit_collateral,
+            tag,
+            id,
             amount,
         );
 
