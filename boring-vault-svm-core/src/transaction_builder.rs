@@ -583,13 +583,7 @@ impl TransactionBuilder {
         tag: u8,
         id: u8,
     ) -> Result<()> {
-        let eix = KaminoInitObligation::new(
-            vault_id,
-            sub_account,
-            lending_market,
-            tag,
-            id,
-        );
+        let eix = KaminoInitObligation::new(vault_id, sub_account, lending_market, tag, id);
 
         let ixs = match authority.as_ref() {
             Some(authority) => {
@@ -616,23 +610,23 @@ impl TransactionBuilder {
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
         sub_account: u8,
-        obligation: Pubkey,
         reserve: Pubkey,
         reserve_farm_state: Pubkey,
-        obligation_farm: Pubkey,
         lending_market: Pubkey,
-        farms_program: Pubkey,
+        delegatee: Option<Pubkey>,
+        tag: Option<u8>,
+        id: Option<u8>,
         mode: u8,
     ) -> Result<()> {
         let eix = KaminoInitObligationFarmsForReserve::new(
             vault_id,
             sub_account,
-            obligation,
             reserve,
             reserve_farm_state,
-            obligation_farm,
             lending_market,
-            farms_program,
+            delegatee,
+            tag.unwrap_or(0),
+            id.unwrap_or(0),
             mode,
         );
 

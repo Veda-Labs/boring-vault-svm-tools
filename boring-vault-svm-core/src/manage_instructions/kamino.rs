@@ -77,13 +77,7 @@ pub struct KaminoInitObligation {
 }
 
 impl KaminoInitObligation {
-    pub fn new(
-        vault_id: u64,
-        sub_account: u8,
-        lending_market: Pubkey,
-        tag: u8,
-        id: u8,
-    ) -> Self {
+    pub fn new(vault_id: u64, sub_account: u8, lending_market: Pubkey, tag: u8, id: u8) -> Self {
         Self {
             vault_id,
             sub_account,
@@ -152,12 +146,12 @@ impl ExternalInstruction for KaminoInitObligation {
 pub struct KaminoInitObligationFarmsForReserve {
     vault_id: u64,
     sub_account: u8,
-    obligation: Pubkey,
     reserve: Pubkey,
     reserve_farm_state: Pubkey,
-    obligation_farm: Pubkey,
     lending_market: Pubkey,
-    farms_program: Pubkey,
+    delegatee: Option<Pubkey>,
+    tag: u8,
+    id: u8,
     mode: u8,
 }
 
@@ -165,23 +159,23 @@ impl KaminoInitObligationFarmsForReserve {
     pub fn new(
         vault_id: u64,
         sub_account: u8,
-        obligation: Pubkey,
         reserve: Pubkey,
         reserve_farm_state: Pubkey,
-        obligation_farm: Pubkey,
         lending_market: Pubkey,
-        farms_program: Pubkey,
+        delegatee: Option<Pubkey>,
+        tag: u8,
+        id: u8,
         mode: u8,
     ) -> Self {
         Self {
             vault_id,
             sub_account,
-            obligation,
             reserve,
             reserve_farm_state,
-            obligation_farm,
             lending_market,
-            farms_program,
+            delegatee,
+            tag,
+            id,
             mode,
         }
     }
@@ -205,16 +199,35 @@ impl ExternalInstruction for KaminoInitObligationFarmsForReserve {
         let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
         let lending_market_authority =
             pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
+
+        let delegatee = match self.delegatee {
+            Some(delegatee) => delegatee,
+            None => owner,
+        };
+
+        let obligation_farm =
+            pdas::get_obligation_farm(&self.reserve_farm_state, &delegatee, &self.ix_program_id());
+
+        let obligation = pdas::get_obligation(
+            self.tag,
+            self.id,
+            &owner,
+            &self.lending_market,
+            &system_program::ID,
+            &system_program::ID,
+            &self.ix_program_id(),
+        );
+
         vec![
             AccountMeta::new(owner, false),                    // obligation owner
             AccountMeta::new(owner, false),                    // fee_payer
-            AccountMeta::new(self.obligation, false),          // obligation
+            AccountMeta::new(obligation, false),               // obligation
             AccountMeta::new(lending_market_authority, false), // lending market authority
             AccountMeta::new(self.reserve, false),             // reserve
             AccountMeta::new(self.reserve_farm_state, false),  // reserve farm state
-            AccountMeta::new(self.obligation_farm, false),     // obligation farm
+            AccountMeta::new(obligation_farm, false),          // obligation farm
             AccountMeta::new_readonly(self.lending_market, false), // lending market
-            AccountMeta::new_readonly(self.farms_program, false), // farms program
+            AccountMeta::new_readonly(KAMINO_FARMS_PROGRAM_ID, false), // farms program
             AccountMeta::new_readonly(solana_program::sysvar::rent::ID, false), // rent
             AccountMeta::new_readonly(system_program::ID, false), // system program
             AccountMeta::new_readonly(self.ix_program_id(), false), // ix program id

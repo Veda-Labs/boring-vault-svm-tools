@@ -94,6 +94,14 @@ pub fn get_lending_market_authority(lending_market: &Pubkey, program_id: &Pubkey
     Pubkey::find_program_address(&[b"lma", lending_market.as_ref()], program_id).0
 }
 
+pub fn get_obligation_farm(farm_state: &Pubkey, delegatee: &Pubkey, program_id: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[b"user", farm_state.as_ref(), delegatee.as_ref()],
+        program_id,
+    )
+    .0
+}
+
 pub fn ensure_ata(
     client: &RpcClient,
     signer: &Pubkey,

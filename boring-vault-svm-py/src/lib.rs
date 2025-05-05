@@ -546,12 +546,12 @@ impl TransactionBuilder {
         authority_bytes: Option<&[u8]>,
         vault_id: u64,
         sub_account: u8,
-        obligation: String,
         reserve: String,
         reserve_farm_state: String,
-        obligation_farm: String,
         lending_market: String,
-        farms_program: String,
+        delegatee: Option<String>,
+        tag: Option<u8>,
+        id: Option<u8>,
         mode: u8,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
@@ -561,12 +561,13 @@ impl TransactionBuilder {
             None => None,
         };
 
-        let obligation_pubkey = to_pubkey_from_string(obligation)?;
         let reserve_pubkey = to_pubkey_from_string(reserve)?;
         let reserve_farm_state_pubkey = to_pubkey_from_string(reserve_farm_state)?;
-        let obligation_farm_pubkey = to_pubkey_from_string(obligation_farm)?;
         let lending_market_pubkey = to_pubkey_from_string(lending_market)?;
-        let farms_program_pubkey = to_pubkey_from_string(farms_program)?;
+        let delegatee_pubkey = match delegatee {
+            Some(bytes) => Some(to_pubkey_from_string(bytes)?),
+            None => None,
+        };
 
         self.inner
             .init_obligation_farms_for_reserve(
@@ -574,12 +575,12 @@ impl TransactionBuilder {
                 authority,
                 vault_id,
                 sub_account,
-                obligation_pubkey,
                 reserve_pubkey,
                 reserve_farm_state_pubkey,
-                obligation_farm_pubkey,
                 lending_market_pubkey,
-                farms_program_pubkey,
+                delegatee_pubkey,
+                tag,
+                id,
                 mode,
             )
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
