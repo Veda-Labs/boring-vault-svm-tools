@@ -25,7 +25,7 @@ async def main():
         # Create builder
         print("Creating builder...")
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
-        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
+        builder = boring_vault_svm.TransactionBuilder("jito_sol", "https://api.mainnet-beta.solana.com")
 
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
@@ -206,9 +206,9 @@ async def main():
         #     amount=10000  # amount in lamports
         # )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting deposit sub-account...")
         # builder.set_deposit_sub_account(
@@ -244,83 +244,64 @@ async def main():
         # builder.manage_kamino_init_obligation(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     user_metadata="CXvftRiAuz19jsRWQoLEHz6geWhCnbGE435wKK7Ggrdz",
-        #     lending_market="6WVSwDQXrBZeQVnu6hpnsRZhodaJTZBUaC334SiiBKdb",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
         #     tag=0,
         #     id=0,
         # )
 
-        print("Calling init obligation farms for reserve")
-        builder.manage_kamino_init_obligation_farms_for_reserve(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,  # or None if no authority needed
-            vault_id=3,  # your vault ID
-            sub_account=2,  # source sub account
-            reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na", # TODO: GET FOR JITO/SOL RESERVE
-            reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P", # TODO: GET FOR JITO/SOL RESERVE 
-            lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6", # TODO: GET FOR JITO/SOL RESERVE
-            delegatee=None,
-            tag=0,
-            id=0,
-            mode=0,
-        )
-
-        # print("Refreshing price list...")
-        # builder.refresh_reserve(
+        # print("Calling init obligation farms for reserve")
+        # builder.manage_kamino_init_obligation_farms_for_reserve(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     oracle_prices="3NJYmanage_kamino_refresh_price_listftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",  # example oracle prices account
-        #     oracle_mapping="Chpu5ZgfWX5ZzVpUx9Xvv4WPM75Xd7zPJNDPsFnCpLpk",  # example oracle mapping account
-        #     oracle_twaps="GbpsVomudPRRwmqfTmo3MYQVTikPG6QXxqpzJexA1JRb",  # example oracle twaps account
-        #     price_accounts=[
-        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
-        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
-        #     ],
-        #     tokens=[51, 0, 51, 52]  
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
+        #     mode=0,
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
+
+        # print("Refreshing price list...")
+        # builder.manage_kamino_refresh_price_list(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
         # )
 
         # print("Refreshing Kamino Reserve")
         # builder.manage_kamino_refresh_reserve(
         #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     pyth_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     switchboard_price_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     switchboard_twap_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     scope_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
         # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Refreshing obligation")
         # builder.manage_kamino_refresh_obligation(
         #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
+        #     tag=0,
+        #     id=0,
         # )
 
         # print("Calling refresh obligation farms for reserve")
         # builder.manage_kamino_refresh_obligation_farms_for_reserve(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
-        #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
         #     mode=0,
         # )
 
@@ -328,17 +309,17 @@ async def main():
         # builder.manage_kamino_deposit(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     reserve_liquidity_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # JitoSOL
-        #     reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
-        #     reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
-        #     reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
         #     amount=100000,  # amount in lamports (0.0001 JitoSOL)
+        
         # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # Example usage
         # print("Depositing solend")
