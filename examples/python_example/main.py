@@ -182,7 +182,7 @@ async def main():
         #     signer_bytes=signer_bytes,
         #     vault_id=3,
         #     deposit_mint=token_mint,
-        #     deposit_amount=1_000,
+        #     deposit_amount=1_000_000,
         #     min_mint_amount=0
         # )
 
@@ -272,6 +272,10 @@ async def main():
         #     sub_account=2,
         # )
 
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
+
         # print("Refreshing Kamino Reserve")
         # builder.manage_kamino_refresh_reserve(
         #     signer_bytes=signer_bytes,
@@ -279,10 +283,6 @@ async def main():
         #     vault_id=3,
         #     sub_account=2,
         # )
-
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Refreshing obligation")
         # builder.manage_kamino_refresh_obligation(
@@ -313,24 +313,22 @@ async def main():
         #     sub_account=2,  # source sub account
         #     tag=0,
         #     id=0,
-        #     amount=100000,  # amount in lamports (0.0001 JitoSOL)
-        
+        #     amount=1000000,  # amount in lamports (0.0001 JitoSOL)
         # )
 
-        builder.manage_kamino_borrow(
-            signer_bytes=signer_bytes,
-            authority_bytes=signer_bytes,
-            vault_id=3,
-            sub_account=2,
-            tag=0,
-            id=0,
-            amount=100000,
-        )
+        # builder.manage_kamino_borrow(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
+        #     tag=0,
+        #     id=0,
+        #     amount=1,
+        # )
 
-
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # Example usage
         # print("Depositing solend")

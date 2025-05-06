@@ -2,6 +2,7 @@ pub mod bindings;
 pub mod constants;
 pub mod discriminator;
 pub mod pdas;
+pub mod rpc;
 
 use eyre::{Context, Result};
 use std::fs;

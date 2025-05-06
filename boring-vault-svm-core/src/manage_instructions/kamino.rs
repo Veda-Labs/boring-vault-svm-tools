@@ -1,11 +1,11 @@
+use std::str::FromStr;
+
 use crate::impl_external_instruction_common;
 use crate::manage_instructions::ExternalInstruction;
 use crate::utils::bindings::boring_vault_svm::types::{Operator, Operators};
 use crate::utils::{discriminator, pdas};
 
-use eyre::Result;
 use solana_instruction::account_meta::AccountMeta;
-use solana_instruction::Instruction;
 use solana_program::{system_program, sysvar::instructions::ID as SYSVAR_INSTRUCTIONS_ID};
 use solana_pubkey::{pubkey, Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
@@ -389,34 +389,6 @@ impl ExternalInstruction for KaminoRefreshPriceList {
     }
 }
 
-impl KaminoRefreshPriceList {
-    pub fn create_instruction(
-        &self,
-        oracle_prices: &Pubkey,
-        oracle_mapping: &Pubkey,
-        oracle_twaps: &Pubkey,
-    ) -> Result<Instruction> {
-        let mut accounts = vec![
-            AccountMeta::new(*oracle_prices, false),
-            AccountMeta::new_readonly(*oracle_mapping, false),
-            AccountMeta::new(*oracle_twaps, false),
-            AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false),
-        ];
-
-        for price_account in &self.price_accounts {
-            accounts.push(AccountMeta::new_readonly(*price_account, false));
-        }
-
-        let instruction = Instruction {
-            program_id: self.ix_program_id(),
-            accounts,
-            data: self.ix_data(),
-        };
-
-        Ok(instruction)
-    }
-}
-
 pub struct KaminoRefreshObligation {
     vault_id: u64,
     sub_account: u8,
@@ -463,6 +435,10 @@ impl ExternalInstruction for KaminoRefreshObligation {
         vec![
             AccountMeta::new_readonly(self.lending_market, false),
             AccountMeta::new(obligation, false),
+            AccountMeta::new(
+                Pubkey::from_str("F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na").unwrap(),
+                false,
+            ), // farm accounts obligation farm user state
         ]
     }
 
@@ -580,6 +556,7 @@ pub struct KaminoDeposit {
     reserve_liquidity_supply: Pubkey,
     reserve_collateral_mint: Pubkey,
     reserve_destination_deposit_collateral: Pubkey,
+    reserve_farm_state: Pubkey,
     tag: u8,
     id: u8,
     amount: u64,
@@ -595,6 +572,7 @@ impl KaminoDeposit {
         reserve_liquidity_supply: Pubkey,
         reserve_collateral_mint: Pubkey,
         reserve_destination_deposit_collateral: Pubkey,
+        reserve_farm_state: Pubkey,
         tag: u8,
         id: u8,
         amount: u64,
@@ -608,6 +586,7 @@ impl KaminoDeposit {
             reserve_liquidity_supply,
             reserve_collateral_mint,
             reserve_destination_deposit_collateral,
+            reserve_farm_state,
             tag,
             id,
             amount,
@@ -650,6 +629,12 @@ impl ExternalInstruction for KaminoDeposit {
             &self.ix_program_id(),
         );
 
+        let obligation_farm = pdas::get_obligation_farm(
+            &self.reserve_farm_state,
+            &obligation,
+            &KAMINO_FARMS_PROGRAM_ID,
+        );
+
         vec![
             AccountMeta::new(owner, false),                         // owner
             AccountMeta::new(obligation, false),                    // obligation
@@ -665,16 +650,8 @@ impl ExternalInstruction for KaminoDeposit {
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // collateral token program
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),     // liquidity token program
             AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false), // sysvar instruction
-            // TODO: these two accounts look to be hardcoded but are actually user/farm derived accounts,
-            // need to add a function to get these accounts
-            AccountMeta::new(
-                pubkey!("GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t"),
-                false,
-            ), // farm accounts obligation farm user state
-            AccountMeta::new(
-                pubkey!("B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P"),
-                false,
-            ), // farms accounts reserve farm state
+            AccountMeta::new(obligation_farm, false), // farm accounts obligation farm user state
+            AccountMeta::new(self.reserve_farm_state, false), // farms accounts reserve farm state
             AccountMeta::new_readonly(KAMINO_FARMS_PROGRAM_ID, false), // farms program
         ]
     }

@@ -1,8 +1,9 @@
+// Refactor file split protocols
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::manage_instructions::{kamino::*, system::*};
+use crate::manage_instructions::{kamino::*, system::*, ExternalInstruction};
 use crate::utils::{ensure_ata, get_lut_pda, get_value, get_vault_pda, load_json, pdas};
 use crate::{instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
@@ -741,6 +742,17 @@ impl TransactionBuilder {
             self.oracle_prices,
         );
 
+        let eix2 = KaminoRefreshReserve::new(
+            vault_id,
+            sub_account,
+            self.borrow_reserve,
+            self.lending_market,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            self.oracle_prices,
+        );
+
         let ixs = match authority.as_ref() {
             Some(authority) => {
                 create_manage_instruction(&self.client, &signer, Some(authority), eix)?
@@ -748,7 +760,18 @@ impl TransactionBuilder {
             None => create_manage_instruction(&self.client, &signer, None, eix)?,
         };
 
+        let ixs2 = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix2)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix2)?,
+        };
+
         for ix in ixs {
+            self.instructions.push(ix);
+        }
+
+        for ix in ixs2 {
             self.instructions.push(ix);
         }
 
@@ -851,11 +874,7 @@ impl TransactionBuilder {
 
         // This instruction cannot be done by CPI
         // https://github.com/Kamino-Finance/scope/blob/c97011fffcd0695e4b95f0108e7d2d5aba4c680f/programs/scope/src/handlers/handler_refresh_prices.rs#L173
-        let ix = eix.create_instruction(
-            &self.oracle_prices,
-            &self.oracle_mapping,
-            &self.oracle_twaps,
-        )?;
+        let ix = eix.to_instruction();
         self.instructions.push(ix);
 
         self.add_signer_if_keypair(signer);
@@ -881,6 +900,7 @@ impl TransactionBuilder {
             self.reserve_liquidity_supply,
             self.reserve_collateral_mint,
             self.reserve_destination_deposit_collateral,
+            self.reserve_farm_state,
             tag,
             id,
             amount,

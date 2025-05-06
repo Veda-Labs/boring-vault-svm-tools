@@ -713,7 +713,6 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 
     let manage_ix_data = boring_vault_svm::client::args::Manage { args }.data();
 
-    // Create the instruction
     let instruction = solana_program::instruction::Instruction {
         program_id: boring_vault_svm::ID,
         accounts,
