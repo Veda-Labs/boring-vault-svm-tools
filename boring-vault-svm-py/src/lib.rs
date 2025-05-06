@@ -575,7 +575,7 @@ impl TransactionBuilder {
         };
 
         self.inner
-            .refresh_reserve(signer, authority, vault_id, sub_account)
+            .refresh_reserves(signer, authority, vault_id, sub_account)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())

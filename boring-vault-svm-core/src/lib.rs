@@ -1,4 +1,5 @@
 #![allow(clippy::too_many_arguments)]
+pub mod config;
 pub mod instructions;
 pub mod manage_instructions;
 pub mod transaction_builder;
