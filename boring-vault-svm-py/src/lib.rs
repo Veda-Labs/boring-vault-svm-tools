@@ -20,11 +20,9 @@ struct TransactionBuilder {
 #[pymethods]
 impl TransactionBuilder {
     #[new]
-    fn new(market: &str, rpc_url: String) -> Self {
+    fn new(rpc_url: String) -> Self {
         Self {
-            inner: boring_vault_svm_core::transaction_builder::TransactionBuilder::new(
-                market, rpc_url,
-            ),
+            inner: boring_vault_svm_core::transaction_builder::TransactionBuilder::new(rpc_url),
         }
     }
 
@@ -672,6 +670,30 @@ impl TransactionBuilder {
 
         self.inner
             .kamino_deposit(signer, authority, vault_id, sub_account, tag, id, amount)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn manage_kamino_borrow(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: Option<&[u8]>,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+        amount: u64,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        let authority = match authority_bytes {
+            Some(bytes) => Some(KeypairOrPublickey::Keypair(to_keypair_from_bytes(bytes)?)),
+            None => None,
+        };
+
+        self.inner
+            .kamino_borrow(signer, authority, vault_id, sub_account, tag, id, amount)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())

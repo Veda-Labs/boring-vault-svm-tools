@@ -25,7 +25,7 @@ async def main():
         # Create builder
         print("Creating builder...")
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
-        builder = boring_vault_svm.TransactionBuilder("jito_sol", "https://api.mainnet-beta.solana.com")
+        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
 
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
@@ -317,9 +317,20 @@ async def main():
         
         # )
 
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
+        builder.manage_kamino_borrow(
+            signer_bytes=signer_bytes,
+            authority_bytes=signer_bytes,
+            vault_id=3,
+            sub_account=2,
+            tag=0,
+            id=0,
+            amount=100000,
+        )
+
+
+        print("Sending instructions as one bundle...")
+        tx_hash = builder.try_bundle_all(signer_bytes)
+        print(f"Success! Transaction hash: {tx_hash}")
 
         # Example usage
         # print("Depositing solend")

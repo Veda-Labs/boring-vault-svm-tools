@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::manage_instructions::{kamino::*, system::*};
-use crate::utils::{get_lut_pda, get_vault_pda, load_json};
+use crate::utils::{ensure_ata, get_lut_pda, get_value, get_vault_pda, load_json, pdas};
 use crate::{instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -17,6 +17,7 @@ use solana_sdk::{
     transaction::VersionedTransaction,
 };
 use solana_signer::Signer;
+use spl_token::ID;
 
 pub struct TransactionBuilder {
     client: RpcClient,
@@ -34,15 +35,23 @@ pub struct TransactionBuilder {
     oracle_twaps: Pubkey,
     price_accounts: Vec<Pubkey>,
     tokens: Vec<u16>,
+    reserve_source_liquidity_mint: Pubkey,
+    borrow_reserve: Pubkey,
+    reserve_source_liquidity: Pubkey,
+    reserve_source_liquidity_fee_receiver: Pubkey,
 }
 
 impl TransactionBuilder {
-    pub fn new(market: &str, rpc_url: String) -> Self {
+    pub fn new(rpc_url: String) -> Self {
         let client = RpcClient::new(rpc_url);
 
         let instructions = vec![];
         let signers = HashMap::new();
-        let data = load_json(market, "../../data/kamino.json").unwrap();
+        let all_data = load_json("../../data/kamino.json").unwrap();
+
+        let mut data = get_value(&all_data, "jito")
+            .and_then(|d| get_value(&d, "lend"))
+            .unwrap();
 
         let reserve = Pubkey::from_str(data["reserve"].as_str().unwrap()).unwrap();
         let reserve_farm_state =
@@ -81,6 +90,22 @@ impl TransactionBuilder {
             .map(|s| s.as_u64().unwrap() as u16)
             .collect();
 
+        data = get_value(&all_data, "sol")
+            .and_then(|d| get_value(&d, "borrow"))
+            .unwrap();
+
+        let borrow_reserve = Pubkey::from_str(data["reserve"].as_str().unwrap()).unwrap();
+        let reserve_source_liquidity_mint =
+            Pubkey::from_str(data["reserve_source_liquidity_mint"].as_str().unwrap()).unwrap();
+        let reserve_source_liquidity =
+            Pubkey::from_str(data["reserve_source_liquidity"].as_str().unwrap()).unwrap();
+        let reserve_source_liquidity_fee_receiver = Pubkey::from_str(
+            data["reserve_source_liquidity_fee_receiver"]
+                .as_str()
+                .unwrap(),
+        )
+        .unwrap();
+
         Self {
             client,
             instructions,
@@ -97,6 +122,10 @@ impl TransactionBuilder {
             oracle_twaps,
             price_accounts,
             tokens,
+            borrow_reserve,
+            reserve_source_liquidity_mint,
+            reserve_source_liquidity,
+            reserve_source_liquidity_fee_receiver,
         }
     }
 
@@ -656,6 +685,7 @@ impl TransactionBuilder {
 
     pub fn init_obligation_farms_for_reserve(
         &mut self,
+
         signer: KeypairOrPublickey,
         authority: Option<KeypairOrPublickey>,
         vault_id: u64,
@@ -871,6 +901,58 @@ impl TransactionBuilder {
         self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
             self.add_signer_if_keypair(authority);
+        }
+
+        Ok(())
+    }
+
+    pub fn kamino_borrow(
+        &mut self,
+        signer: KeypairOrPublickey,
+        authority: Option<KeypairOrPublickey>,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+        amount: u64,
+    ) -> Result<()> {
+        let eix = KaminoBorrow::new(
+            vault_id,
+            sub_account,
+            self.lending_market,
+            self.borrow_reserve,
+            self.reserve_source_liquidity_mint,
+            self.reserve_source_liquidity,
+            self.reserve_source_liquidity_fee_receiver,
+            tag,
+            id,
+            amount,
+        );
+
+        let mint_account = self.client.get_account(&self.reserve_source_liquidity_mint)?;
+        let token_program = mint_account.owner;
+
+        let (_, user_instruction) = ensure_ata(
+            &self.client,
+            &signer.pubkey(),
+            &pdas::get_vault_pda(vault_id, sub_account),
+            &self.reserve_source_liquidity_mint,
+            &token_program,
+        )?;
+
+        if let Some(uix) = user_instruction {
+            self.instructions.push(uix);
+        }
+
+        let ixs = match authority.as_ref() {
+            Some(authority) => {
+                create_manage_instruction(&self.client, &signer, Some(authority), eix)?
+            }
+            None => create_manage_instruction(&self.client, &signer, None, eix)?,
+        };
+
+        for ix in ixs {
+            self.instructions.push(ix);
         }
 
         Ok(())

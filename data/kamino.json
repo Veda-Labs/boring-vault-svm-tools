@@ -1,21 +1,31 @@
 {
-    "jito_sol": {
-        "reserve": "F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        "reserve_farm_state": "B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
-        "reserve_liquidity_mint": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
-        "reserve_liquidity_supply": "5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
-        "reserve_collateral_mint": "JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
-        "reserve_destination_deposit_collateral": "3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
-        "lending_market": "H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        "oracle_prices": "3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
-        "oracle_mapping": "Chpu5ZgfWX5ZzVpUx9Xvv4WPM75Xd7zPJNDPsFnCpLpk",
-        "oracle_twaps": "GbpsVomudPRRwmqfTmo3MYQVTikPG6QXxqpzJexA1JRb",
-        "price_accounts": [
-            "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-            "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
-            "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-            "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE"
-        ],
-        "tokens": [51, 0, 51, 52]
+    "jito": {
+        "lend": {
+            "reserve": "F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
+            "reserve_farm_state": "B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
+            "reserve_liquidity_mint": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+            "reserve_liquidity_supply": "5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
+            "reserve_collateral_mint": "JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
+            "reserve_destination_deposit_collateral": "3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
+            "lending_market": "H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
+            "oracle_prices": "3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
+            "oracle_mapping": "Chpu5ZgfWX5ZzVpUx9Xvv4WPM75Xd7zPJNDPsFnCpLpk",
+            "oracle_twaps": "GbpsVomudPRRwmqfTmo3MYQVTikPG6QXxqpzJexA1JRb",
+            "price_accounts": [
+                "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
+                "H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6", 
+                "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
+                "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE"
+            ],
+            "tokens": [51, 0, 51, 52]
+        }
+    },
+    "sol": {
+        "borrow": {
+            "reserve": "6gTJfuPHEg6uRAijRkMqNc9kan4sVZejKMxmvx2grT1p",
+            "reserve_source_liquidity_mint": "So11111111111111111111111111111111111111112",
+            "reserve_source_liquidity": "ywaaLvG7t1vXJo8sT3UzE8yzzZtxLM7Fmev64Jbooye",
+            "reserve_source_liquidity_fee_receiver": "EQ7hw63aBS7aPQqXsoxaaBxiwbEzaAiY9Js6tCekkqxf"
+        }
     }   
 }

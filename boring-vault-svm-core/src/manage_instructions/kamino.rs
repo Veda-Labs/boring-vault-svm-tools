@@ -656,9 +656,9 @@ impl ExternalInstruction for KaminoDeposit {
             AccountMeta::new_readonly(self.lending_market, false),  // lending market
             AccountMeta::new(lending_market_authority, false),      // lending market authority
             AccountMeta::new(self.reserve, false),                  // reserve
-            AccountMeta::new(self.reserve_liquidity_mint, false),   // reserve liquidity mint
+            AccountMeta::new(self.reserve_liquidity_mint, false), // reserve_destination_collateral
             AccountMeta::new(self.reserve_liquidity_supply, false), // reserve liquidity supply
-            AccountMeta::new(self.reserve_collateral_mint, false),  // reserve collateral mint
+            AccountMeta::new(self.reserve_collateral_mint, false), // reserve collateral mint
             AccountMeta::new(self.reserve_destination_deposit_collateral, false), // reserve destination deposit collateral
             AccountMeta::new(vault_mint_ata, false), // user source liquidity
             AccountMeta::new_readonly(self.ix_program_id(), false), // placeholder user destination collateral
@@ -684,6 +684,111 @@ impl ExternalInstruction for KaminoDeposit {
             Operator::IngestInstruction(0, 8),
             Operator::IngestAccount(2),
             Operator::IngestAccount(5),
+            Operator::IngestInstructionDataSize,
+        ];
+
+        Operators { operators }
+    }
+}
+
+pub struct KaminoBorrow {
+    vault_id: u64,
+    sub_account: u8,
+    lending_market: Pubkey,
+    reserve: Pubkey,
+    borrow_reserve_liquidity_mint: Pubkey,
+    reserve_source_liquidity: Pubkey,
+    borrow_reserve_liquidity_fee_receiver: Pubkey,
+    tag: u8,
+    id: u8,
+    amount: u64,
+}
+
+impl KaminoBorrow {
+    pub fn new(
+        vault_id: u64,
+        sub_account: u8,
+        lending_market: Pubkey,
+        reserve: Pubkey,
+        borrow_reserve_liquidity_mint: Pubkey,
+        reserve_source_liquidity: Pubkey,
+        borrow_reserve_liquidity_fee_receiver: Pubkey,
+        tag: u8,
+        id: u8,
+        amount: u64,
+    ) -> Self {
+        Self {
+            vault_id,
+            sub_account,
+            lending_market,
+            reserve,
+            borrow_reserve_liquidity_mint,
+            reserve_source_liquidity,
+            borrow_reserve_liquidity_fee_receiver,
+            tag,
+            id,
+            amount,
+        }
+    }
+}
+
+impl ExternalInstruction for KaminoBorrow {
+    impl_external_instruction_common!();
+
+    fn ix_data(&self) -> Vec<u8> {
+        let discriminator =
+            hex::decode("a1808ff5abc7c206").expect("Failed to decode hex discriminator");
+        let mut ix_data = discriminator.to_vec();
+        ix_data.extend_from_slice(&self.amount.to_le_bytes());
+        ix_data
+    }
+
+    fn ix_program_id(&self) -> Pubkey {
+        KAMINO_PROGRAM_ID
+    }
+
+    fn ix_remaining_accounts(&self) -> Vec<AccountMeta> {
+        let owner = pdas::get_vault_pda(self.vault_id, self.sub_account);
+        let lending_market_authority =
+            pdas::get_lending_market_authority(&self.lending_market, &self.ix_program_id());
+        let vault_mint_ata = get_associated_token_address_with_program_id(
+            &owner,
+            &self.borrow_reserve_liquidity_mint,
+            &TOKEN_PROGRAM_ID,
+        );
+        let obligation = pdas::get_obligation(
+            self.tag,
+            self.id,
+            &owner,
+            &self.lending_market,
+            &system_program::ID,
+            &system_program::ID,
+            &self.ix_program_id(),
+        );
+
+        vec![
+            AccountMeta::new(owner, false),                              // owner
+            AccountMeta::new(obligation, false),                         // obligation
+            AccountMeta::new_readonly(self.lending_market, false),       // lending market
+            AccountMeta::new(lending_market_authority, false),           // lending market authority
+            AccountMeta::new(self.reserve, false),                       // reserve
+            AccountMeta::new(self.borrow_reserve_liquidity_mint, false), // borrow reserve liquidity mint
+            AccountMeta::new(self.reserve_source_liquidity, false), // address = borrow_reserve.load()?.liquidity.supply_vault
+            AccountMeta::new(self.borrow_reserve_liquidity_fee_receiver, false), // address = borrow_reserve.load()?.liquidity.fee_vault
+            AccountMeta::new(vault_mint_ata, false), // user source liquidity
+            AccountMeta::new(KAMINO_PROGRAM_ID, false), // refferer state
+            AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
+            AccountMeta::new_readonly(SYSVAR_INSTRUCTIONS_ID, false),
+            AccountMeta::new(KAMINO_PROGRAM_ID, false), // Farms Accounts Obligation Farm User State
+            AccountMeta::new(KAMINO_PROGRAM_ID, false), // Farms Accounts Reserve Farm State
+            AccountMeta::new_readonly(KAMINO_FARMS_PROGRAM_ID, false), // rent
+        ]
+    }
+
+    fn ix_operators(&self) -> Operators {
+        let operators = vec![
+            Operator::IngestInstruction(0, 8),
+            Operator::IngestAccount(2),
             Operator::IngestInstructionDataSize,
         ];
 
