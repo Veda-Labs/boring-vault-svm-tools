@@ -449,11 +449,7 @@ pub fn create_claim_fees_in_base_instruction(
     let (vault_ata, vault_instruction) =
         ensure_ata(client, signer, &vault_pda, &base_asset, &token_program_id)?;
 
-    instructions.extend(
-        payout_instruction
-            .into_iter()
-            .chain(vault_instruction.into_iter()),
-    );
+    instructions.extend(payout_instruction.into_iter().chain(vault_instruction));
 
     let accounts = boring_vault_svm::client::accounts::ClaimFeesInBase {
         signer: *signer,
@@ -513,19 +509,19 @@ pub fn create_deposit_instruction(
     let mut instructions = vec![];
 
     let (user_ata, user_instruction) =
-        ensure_ata(client, signer, &signer, &deposit_mint, &token_program_id)?;
+        ensure_ata(client, signer, signer, deposit_mint, &token_program_id)?;
 
     let (vault_ata, vault_instruction) =
-        ensure_ata(client, signer, &vault_pda, &deposit_mint, &token_program_id)?;
+        ensure_ata(client, signer, &vault_pda, deposit_mint, &token_program_id)?;
 
     let (user_share_ata, user_share_instruction) =
-        ensure_ata(client, signer, &signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
 
     instructions.extend(
         user_instruction
             .into_iter()
-            .chain(vault_instruction.into_iter())
-            .chain(user_share_instruction.into_iter()),
+            .chain(vault_instruction)
+            .chain(user_share_instruction),
     );
 
     let accounts = boring_vault_svm::client::accounts::Deposit {
@@ -594,24 +590,19 @@ pub fn create_withdraw_instruction(
     let mut instructions = vec![];
 
     let (user_ata, user_instruction) =
-        ensure_ata(client, signer, &signer, &withdraw_mint, &token_program_id)?;
+        ensure_ata(client, signer, signer, withdraw_mint, &token_program_id)?;
 
-    let (vault_ata, vault_instruction) = ensure_ata(
-        client,
-        signer,
-        &vault_pda,
-        &withdraw_mint,
-        &token_program_id,
-    )?;
+    let (vault_ata, vault_instruction) =
+        ensure_ata(client, signer, &vault_pda, withdraw_mint, &token_program_id)?;
 
     let (user_share_ata, user_share_instruction) =
-        ensure_ata(client, signer, &signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
 
     instructions.extend(
         user_instruction
             .into_iter()
-            .chain(vault_instruction.into_iter())
-            .chain(user_share_instruction.into_iter()),
+            .chain(vault_instruction)
+            .chain(user_share_instruction),
     );
 
     let accounts = boring_vault_svm::client::accounts::Withdraw {

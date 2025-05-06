@@ -17,7 +17,6 @@ use solana_sdk::{
     transaction::VersionedTransaction,
 };
 use solana_signer::Signer;
-use spl_token::ID;
 
 pub struct TransactionBuilder {
     client: RpcClient,
@@ -929,7 +928,9 @@ impl TransactionBuilder {
             amount,
         );
 
-        let mint_account = self.client.get_account(&self.reserve_source_liquidity_mint)?;
+        let mint_account = self
+            .client
+            .get_account(&self.reserve_source_liquidity_mint)?;
         let token_program = mint_account.owner;
 
         let (_, user_instruction) = ensure_ata(
