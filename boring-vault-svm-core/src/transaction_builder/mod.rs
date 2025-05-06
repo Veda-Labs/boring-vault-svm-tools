@@ -7,8 +7,11 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use crate::manage_instructions::system::*;
+use crate::utils::boring_vault_svm::accounts::AssetData;
+use crate::utils::{boring_vault_svm, get_asset_data_pda, get_vault_state_pda};
 use crate::{config::kamino::KaminoConfig, instructions::*, KeypairOrPublickey};
 use anchor_client::solana_sdk::signature::Keypair;
+use anchor_lang::AccountDeserialize;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use bincode;
 use eyre::Result;
@@ -34,7 +37,7 @@ impl TransactionBuilder {
 
         let instructions = vec![];
         let signers = HashMap::new();
-        let kamino_config = KaminoConfig::new("../../data/kamino.json", "jito", "sol")
+        let kamino_config = KaminoConfig::new("data/kamino.json", "jito", "sol")
             .expect("Failed to load Kamino config");
 
         Self {
@@ -529,4 +532,26 @@ impl TransactionBuilder {
 
         Ok(())
     }
+
+    // Boring Vault Getters
+    pub fn get_asset_data(&self, vault_id: u64, mint: Pubkey) -> Result<AssetData> {
+        let vault_state_pda = get_vault_state_pda(vault_id);
+        let asset_data_pda = get_asset_data_pda(vault_state_pda, mint);
+
+        let asset_data = self.client.get_account_data(&asset_data_pda)?;
+
+        Ok(boring_vault_svm::accounts::AssetData::try_deserialize(
+            &mut &asset_data[..],
+        )?)
+    }
+
+    // pub fn get_sub_accounts(&self, vault_id: u64) -> Result<Vec<SubAccount>> {
+    //     // 1. get all sub account PDAs for this 
+    //     let vault_state_pda = get_vault_state_pda(vault_id);
+    //     let sub_accounts = self.client.get_account_data(&vault_state_pda)?;
+
+    //     Ok(boring_vault_svm::accounts::SubAccount::try_deserialize(
+    //         &mut &sub_accounts[..],
+    //     )?)
+    // }
 }

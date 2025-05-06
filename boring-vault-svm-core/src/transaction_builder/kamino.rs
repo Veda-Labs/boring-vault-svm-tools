@@ -1,4 +1,5 @@
 use crate::{
+    config::reserve::Reserve,
     instructions::{create_lut_instruction, create_manage_instruction},
     manage_instructions::{
         ExternalInstruction, KaminoBorrow, KaminoDeposit, KaminoInitObligation,
@@ -6,13 +7,14 @@ use crate::{
         KaminoRefreshObligationFarmsForReserve, KaminoRefreshPriceList, KaminoRefreshReserve,
         KAMINO_PROGRAM_ID,
     },
-    utils::{ensure_ata, get_lut_pda, get_vault_pda, pdas},
+    utils::{ensure_ata, get_lut_pda, get_vault_pda, pdas, rpc::get_account_data_unsafe},
     KeypairOrPublickey,
 };
 
 use super::TransactionBuilder;
 
 use eyre::Result;
+use solana_pubkey::Pubkey;
 
 impl TransactionBuilder {
     pub fn init_user_metadata(
@@ -360,5 +362,9 @@ impl TransactionBuilder {
         }
 
         Ok(())
+    }
+
+    pub fn get_reserve(&self, reserve_address: &Pubkey) -> Result<Reserve> {
+        get_account_data_unsafe::<Reserve>(&self.client, reserve_address)
     }
 }

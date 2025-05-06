@@ -19,3 +19,8 @@ pub fn get_account_data<T: BorshDeserialize>(
         Ok(unsafe { read_unaligned(account.data.as_ptr() as *const T) })
     }
 }
+
+pub fn get_account_data_unsafe<T>(client: &RpcClient, address: &Pubkey) -> Result<T> {
+    let account = client.get_account(address)?;
+    Ok(unsafe { read_unaligned(account.data.as_ptr() as *const T) })
+}
