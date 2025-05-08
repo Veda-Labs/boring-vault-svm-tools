@@ -18,6 +18,8 @@ use crate::{
 
 use super::create_manage_instruction;
 
+pub const WSOL_MINT: &Pubkey = &pubkey!("So11111111111111111111111111111111111111112");
+
 pub fn create_lut_instruction(
     signer: &Pubkey,
     authority: &Pubkey,
@@ -85,9 +87,8 @@ pub fn create_wrap_sol_instructions(
     let mut instructions = vec![];
 
     let vault_pda = get_vault_pda(vault_id, sub_account);
-    let w_sol_mint = pubkey!("So11111111111111111111111111111111111111112");
     let w_sol_ata =
-        get_associated_token_address_with_program_id(&vault_pda, &w_sol_mint, &TOKEN_PROGRAM_ID);
+        get_associated_token_address_with_program_id(&vault_pda, WSOL_MINT, &TOKEN_PROGRAM_ID);
 
     // Transfer amount to wSOL ata.
     let eix_0 = TransferSol::new(vault_id, sub_account, w_sol_ata, amount);
@@ -99,7 +100,7 @@ pub fn create_wrap_sol_instructions(
         &signer.pubkey(),
         vault_id,
         sub_account,
-        &w_sol_mint,
+        WSOL_MINT,
         &TOKEN_PROGRAM_ID,
     )? {
         instructions.push(ix);
@@ -117,9 +118,8 @@ pub fn create_unwrap_sol_instructions(
 ) -> Result<Vec<Instruction>> {
     let mut instructions = vec![];
     let vault_pda = get_vault_pda(vault_id, sub_account);
-    let w_sol_mint = pubkey!("So11111111111111111111111111111111111111112");
     let w_sol_ata =
-        get_associated_token_address_with_program_id(&vault_pda, &w_sol_mint, &TOKEN_PROGRAM_ID);
+        get_associated_token_address_with_program_id(&vault_pda, WSOL_MINT, &TOKEN_PROGRAM_ID);
 
     let eix = CloseAccount::new(vault_id, sub_account, w_sol_ata, TOKEN_PROGRAM_ID);
     instructions.extend(create_manage_instruction(client, signer, authority, eix)?);

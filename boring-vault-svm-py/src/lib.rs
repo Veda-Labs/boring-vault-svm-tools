@@ -1,6 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 use boring_vault_svm_core::KeypairOrPublickey;
-// use boring_vault_svm_core::transaction_builder;
+// use boring_vault_svm_core::builder_builder;
 use pyo3::prelude::*;
 // use pyo3::wrap_pyfunction;
 use solana_keypair::Keypair;
@@ -13,16 +13,16 @@ mod utils;
 
 // Example tx using v2 function https://solscan.io/tx/rRzu7CWxPYstBhHkKfTEdEz6fHhkDfdfuCLWKunsiCUmqWYzAhfmbQD7bZNa5FxU6BfjXF4oU8CVaezoZZQZ36t
 #[pyclass]
-struct TransactionBuilder {
-    inner: boring_vault_svm_core::transaction_builder::TransactionBuilder,
+struct Builder {
+    inner: boring_vault_svm_core::builder::Builder,
 }
 
 #[pymethods]
-impl TransactionBuilder {
+impl Builder {
     #[new]
-    fn new(rpc_url: String) -> Self {
+    fn new(rpc_url: String, path_root: Option<String>) -> Self {
         Self {
-            inner: boring_vault_svm_core::transaction_builder::TransactionBuilder::new(rpc_url),
+            inner: boring_vault_svm_core::builder::Builder::new(rpc_url, path_root),
         }
     }
 
@@ -204,6 +204,44 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    fn get_lend_digest(
+        &mut self,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<(String, String)> {
+        let (address, digest) = self
+            .inner
+            .get_lend_digest(vault_id, sub_account, tag, id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok((address.to_string(), digest))
+    }
+
+    fn get_borrow_digest(
+        &mut self,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<(String, String)> {
+        let (address, digest) = self
+            .inner
+            .get_borrow_digest(vault_id, sub_account, tag, id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok((address.to_string(), digest))
+    }
+
+    fn get_jito_digest(&mut self, vault_id: u64, sub_account: u8) -> PyResult<()> {
+        self.inner
+            .get_jito_digest(vault_id, sub_account)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
     fn close_cpi_digest(
         &mut self,
         signer_bytes: &[u8],
@@ -341,21 +379,13 @@ impl TransactionBuilder {
         &mut self,
         signer_bytes: &[u8],
         vault_id: u64,
-        user_pubkey: String,
         deposit_amount: u64,
         min_mint_amount: u64,
     ) -> PyResult<()> {
         let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
-        let user_pubkey = to_pubkey_from_string(user_pubkey)?;
 
         self.inner
-            .deposit_sol(
-                signer,
-                vault_id,
-                user_pubkey,
-                deposit_amount,
-                min_mint_amount,
-            )
+            .deposit_sol(signer, vault_id, deposit_amount, min_mint_amount)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
         Ok(())
@@ -821,10 +851,68 @@ impl TransactionBuilder {
 
         Ok(())
     }
+
+    fn lend(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: &[u8],
+        vault_id: u64,
+        sub_account: u8,
+        amount: u64,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        let authority = KeypairOrPublickey::Keypair(to_keypair_from_bytes(authority_bytes)?);
+
+        self.inner
+            .lend(
+                signer,
+                Some(authority),
+                vault_id,
+                sub_account,
+                amount,
+                tag,
+                id,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
+
+    fn borrow(
+        &mut self,
+        signer_bytes: &[u8],
+        authority_bytes: &[u8],
+        vault_id: u64,
+        sub_account: u8,
+        amount: u64,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<()> {
+        let signer = KeypairOrPublickey::Keypair(to_keypair_from_bytes(signer_bytes)?);
+
+        let authority = KeypairOrPublickey::Keypair(to_keypair_from_bytes(authority_bytes)?);
+
+        self.inner
+            .borrow(
+                signer,
+                Some(authority),
+                vault_id,
+                sub_account,
+                amount,
+                tag,
+                id,
+            )
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok(())
+    }
 }
 
 #[pymodule]
 fn boring_vault_svm(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<TransactionBuilder>()?;
+    m.add_class::<Builder>()?;
     Ok(())
 }

@@ -780,7 +780,6 @@ pub fn create_deposit_sol_instruction(
     client: &RpcClient,
     signer: &Pubkey,
     vault_id: u64,
-    user_pubkey: &Pubkey,
     deposit_amount: u64,
     min_mint_amount: u64,
 ) -> Result<Vec<Instruction>> {
@@ -796,13 +795,8 @@ pub fn create_deposit_sol_instruction(
 
     let mut instructions = vec![];
 
-    let (user_share_ata, user_instruction) = ensure_ata(
-        client,
-        signer,
-        user_pubkey,
-        &native_mint,
-        &TOKEN_2022_PROGRAM_ID,
-    )?;
+    let (user_share_ata, user_instruction) =
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
 
     instructions.extend(user_instruction);
 

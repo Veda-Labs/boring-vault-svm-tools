@@ -1,0 +1,18 @@
+{
+    "vault_id": 3,
+    "sub_accounts": [0, 1, 2],
+    "assets": [
+        {
+            "mint": "So11111111111111111111111111111111111111112",
+            "decimals": 9,
+            "is_token_2022": false,
+            "oracle": "11111111111111111111111111111111"
+        },
+        {
+            "mint": "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+            "decimals": 9,
+            "is_token_2022": false,
+            "oracle": "4Z1SLH9g4ikNBV8uP2ZctEouqjYmVqB2Tz5SZxKYBN7z"
+        }
+    ]
+}

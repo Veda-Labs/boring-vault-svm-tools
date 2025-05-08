@@ -4,9 +4,9 @@ use crate::{
 };
 use eyre::Result;
 
-use super::TransactionBuilder;
+use crate::builder::Builder;
 
-impl TransactionBuilder {
+impl Builder {
     pub fn wrap_sol(
         &mut self,
         signer: KeypairOrPublickey,

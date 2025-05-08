@@ -1,53 +1,27 @@
-use boring_vault_svm_core::transaction_builder::TransactionBuilder;
-
-use solana_sdk::pubkey::Pubkey;
-use std::fs;
 use std::str::FromStr;
 
-fn show_reserve_data_example() -> Result<(), Box<dyn std::error::Error>> {
+use boring_vault_svm_core::{
+    builder::Builder,
+    view::{get_asset_data, get_vault_state},
+};
+use eyre::Result;
+use solana_pubkey::Pubkey;
+
+fn main() -> Result<()> {
     let rpc_url = "https://api.mainnet-beta.solana.com";
+    let tb = Builder::new(rpc_url.to_string(), Some("data".to_string()));
 
-    let builder = TransactionBuilder::new(rpc_url.to_string());
-    println!("TransactionBuilder initialized.");
+    // tb.get_sub_account_token_totals()?;
 
-    let reserve_pubkey = Pubkey::from_str("F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na")?;
-    println!("Fetching reserve data for: {}", reserve_pubkey);
+    let data = get_asset_data(
+        &tb.client,
+        tb.vault_config.vault_id,
+        Pubkey::from_str("J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn")?,
+    )?;
 
-    match builder.get_reserve(&reserve_pubkey) {
-        Ok(reserve_data) => {
-            println!("Successfully fetched reserve data:");
-            println!("{:#?}", reserve_data);
+    // let (addy, data) = get_vault_state(&tb.client, tb.vault_config.vault_id)?;
 
-            let pretty_data = format!("{:#?}", reserve_data);
-            let output_file_path = "reserve_output.txt";
+    println!("{:?}", data);
 
-            match fs::write(output_file_path, pretty_data) {
-                Ok(_) => println!("Successfully wrote reserve data to {}", output_file_path),
-                Err(e) => eprintln!("Error writing reserve data to file: {}", e),
-            }
-        }
-        Err(e) => {
-            eprintln!("Error fetching reserve data: {:?}", e);
-        }
-    }
     Ok(())
-}
-
-fn main() {
-    // // Try to find a keypair st arting with "sol" within 1M iterations
-    // match generate_vanity_keypair("crispy", 1_000_000_000) {
-    //     Ok(keypair_bytes) => {
-    //         let keypair = Keypair::from_bytes(&keypair_bytes).unwrap();
-    //         println!("Found vanity keypair!");
-    //         println!("Public key: {}", keypair.pubkey());
-    //         println!("Private key bytes: {keypair_bytes:?}");
-    //     }
-    //     Err(e) => println!("Error: {e}"),
-    // }
-
-    // --- Show Reserve Data Example ---
-    println!("\n--- Showing Reserve Data Example ---");
-    if let Err(e) = show_reserve_data_example() {
-        eprintln!("Error in reserve data example: {}", e);
-    }
 }

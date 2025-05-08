@@ -3,9 +3,9 @@ use solana_pubkey::Pubkey;
 
 use crate::{instructions::create_deposit_solend_instructions, KeypairOrPublickey};
 
-use super::TransactionBuilder;
+use crate::builder::Builder;
 
-impl TransactionBuilder {
+impl Builder {
     pub fn deposit_solend(
         &mut self,
         signer: KeypairOrPublickey,

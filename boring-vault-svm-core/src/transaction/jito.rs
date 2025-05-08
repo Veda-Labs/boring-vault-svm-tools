@@ -1,9 +1,9 @@
 use crate::{instructions::create_mint_jito_sol_instructions, KeypairOrPublickey};
 use eyre::Result;
 
-use super::TransactionBuilder;
+use crate::builder::Builder;
 
-impl TransactionBuilder {
+impl Builder {
     pub fn mint_jito_sol(
         &mut self,
         signer: KeypairOrPublickey,

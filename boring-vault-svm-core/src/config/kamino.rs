@@ -80,7 +80,6 @@ impl KaminoConfig {
         borrow_strategy_profile_key: &str,
     ) -> Result<Self> {
         let all_data = load_json(json_path)?;
-        println!("all_data: {:?}", all_data);
         let lend_profile_base = get_value(&all_data, lend_strategy_profile_key).map_err(|_| {
             eyre::eyre!(
                 "Failed to get lend profile key '{}' from {}",
