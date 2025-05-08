@@ -16,7 +16,6 @@ use crate::{
     KeypairOrPublickey,
 };
 
-// Default values as constants
 const DEFAULT_RPC_URL: &str = "https://api.devnet.solana.com";
 const DEFAULT_DATA_PATH: &str = "../data";
 const DEFAULT_KAMINO_FILE: &str = "kamino.json";
@@ -24,7 +23,6 @@ const DEFAULT_VAULT_FILE: &str = "vaults.json";
 const DEFAULT_LEND_PROFILE: &str = "jito";
 const DEFAULT_BORROW_PROFILE: &str = "sol";
 
-// Separate true builder pattern for configuration
 pub struct BuilderConfig {
     rpc_url: String,
     data_path: String,

@@ -52,7 +52,7 @@ pub fn get_sub_account_token_totals(
 
     for sub_account_id in &vault_config.sub_accounts {
         let sub_account_pda = get_vault_pda(vault_config.vault_id, *sub_account_id);
-        println!("Sub-account {}: {}", sub_account_id, sub_account_pda);
+        println!("Sub-account {sub_account_id}: {sub_account_pda}");
 
         // Check native SOL balance
         if let Ok(account) = client.get_account(&sub_account_pda) {

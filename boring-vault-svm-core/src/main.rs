@@ -18,7 +18,7 @@ fn main() -> Result<()> {
 
     // let (addy, data) = get_vault_state(&tb.client, tb.vault_config.vault_id)?;
 
-    println!("{:?}", data);
+    println!("{data:?}");
 
     Ok(())
 }

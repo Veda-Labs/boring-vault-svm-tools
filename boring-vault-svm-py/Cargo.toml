@@ -11,6 +11,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 boring-vault-svm-core = { path = "../boring-vault-svm-core" }
-pyo3 = { version = "0.24.1", features = ["extension-module"] }
+pyo3 = { version = "0.24.1", features = ["extension-module", "multiple-pymethods"] }
 solana-keypair = "2.2"
 solana-pubkey = "2.2"
