@@ -1,9 +1,6 @@
 use std::str::FromStr;
 
-use boring_vault_svm_core::{
-    builder::Builder,
-    view::{get_asset_data, get_vault_state},
-};
+use boring_vault_svm_core::{builder::Builder, view::get_asset_data};
 use eyre::Result;
 use solana_pubkey::Pubkey;
 

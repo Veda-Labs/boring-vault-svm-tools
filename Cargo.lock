@@ -764,6 +764,7 @@ dependencies = [
  "eyre",
  "hex",
  "rayon",
+ "serde",
  "serde_json",
  "solana-account",
  "solana-address-lookup-table-interface",
