@@ -4,3 +4,4 @@ test-ledger/
 program_bytes/
 program_keypairs/
 .env
+venv

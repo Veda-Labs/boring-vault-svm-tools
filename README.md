@@ -28,10 +28,8 @@ Key features:
 
    # Create and activate virtual environment (if not already done)
    python -m venv venv
-   source venv/bin/activate
-
    # Install the package using maturin
-   . ../scripts/python_ini.sh
+   . ./scripts/python_ini.sh
    ```
 
 3. Start the Solana test validator
