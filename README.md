@@ -24,14 +24,14 @@ Key features:
 
    ```bash
    # Navigate to the python example directory
-   cd python_example
+   cd python
 
    # Create and activate virtual environment (if not already done)
    python -m venv venv
    source venv/bin/activate
 
    # Install the package using maturin
-   maturin develop -m ../../boring-vault-svm-py/Cargo.toml
+   . ../scripts/python_ini.sh
    ```
 
 3. Start the Solana test validator
