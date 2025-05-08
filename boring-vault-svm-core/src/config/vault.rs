@@ -1,16 +1,18 @@
 use std::{fs, path::Path};
 
+use crate::utils::deserialize_pubkey;
 use eyre::Result;
 use serde::Deserialize;
 use solana_pubkey::Pubkey;
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct VaultAssetConfig {
+    #[serde(deserialize_with = "deserialize_pubkey")]
     pub mint: Pubkey,
     pub decimals: u8,
     pub is_token_2022: bool,
     #[serde(default)]
-    pub oracle: Option<Pubkey>,
+    #[serde(deserialize_with = "deserialize_pubkey")]
+    pub oracle: Pubkey,
 }
 
 #[derive(Debug, Deserialize)]

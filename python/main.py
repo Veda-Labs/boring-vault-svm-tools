@@ -25,8 +25,14 @@ async def main():
         # Create builder
         print("Creating builder...")
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
-        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com", None)
-
+        builder = boring_vault_svm.Builder(
+            rpc_url="https://api.mainnet-beta.solana.com",
+            data_path = None,
+            kamino_file = None,
+            vault_file = None,
+            lend_mint = None,
+            borrow_mint = None
+        )
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
         # Add instructions
@@ -427,15 +433,15 @@ async def main():
         #     id=0
         # )
 
-        # print("Getting borrow digest...")
-        # data = builder.get_borrow_digest(
-        #     vault_id=3,
-        #     sub_account=2,
-        #     tag=0,
-        #     id=0
-        # )
+        print("Getting borrow digest...")
+        data = builder.get_borrow_digest(
+            vault_id=3,
+            sub_account=2,
+            tag=0,
+            id=0
+        )
 
-        # print(data)
+        print(data)
 
         # print("Getting jito digest...")
         # builder.get_jito_digest(

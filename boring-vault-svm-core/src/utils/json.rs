@@ -1,7 +1,8 @@
 use eyre::{Context, Result};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use solana_pubkey::Pubkey;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, str::FromStr};
 
 pub fn load_json(file_path: &str) -> Result<serde_json::Value> {
     let path = PathBuf::from(file_path);
@@ -66,4 +67,28 @@ pub fn parse_u16_vec_from_value(val_node: &Value, key: &str) -> Result<Vec<u16>>
                 .ok_or_else(|| eyre::eyre!("Invalid u64 in array"))
         })
         .collect()
+}
+
+pub fn deserialize_pubkey<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Pubkey::from_str(&s).map_err(serde::de::Error::custom)
+}
+
+pub fn deserialize_pubkey_vec<'de, D>(deserializer: D) -> Result<Vec<Pubkey>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    // First deserialize as a Vec<String>
+    let string_vec: Vec<String> = Vec::deserialize(deserializer)?;
+
+    // Then convert each string to a Pubkey
+    let result: Result<Vec<Pubkey>, _> = string_vec
+        .into_iter()
+        .map(|s| Pubkey::from_str(&s).map_err(serde::de::Error::custom))
+        .collect();
+
+    result
 }

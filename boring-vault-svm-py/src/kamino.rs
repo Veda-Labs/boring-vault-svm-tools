@@ -229,4 +229,36 @@ impl Builder {
 
         Ok(())
     }
+
+    // !--- READ FUNCTIONS ---!
+
+    fn get_lend_digest(
+        &mut self,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<(String, String)> {
+        let (address, digest) = self
+            .inner
+            .get_lend_digest(vault_id, sub_account, tag, id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok((address.to_string(), digest))
+    }
+
+    fn get_borrow_digest(
+        &mut self,
+        vault_id: u64,
+        sub_account: u8,
+        tag: u8,
+        id: u8,
+    ) -> PyResult<(String, String)> {
+        let (address, digest) = self
+            .inner
+            .get_borrow_digest(vault_id, sub_account, tag, id)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+
+        Ok((address.to_string(), digest))
+    }
 }

@@ -10,16 +10,16 @@ const DEFAULT_RPC_URL: &str = "https://api.devnet.solana.com";
 const DEFAULT_DATA_PATH: &str = "../data";
 const DEFAULT_KAMINO_FILE: &str = "kamino.json";
 const DEFAULT_VAULT_FILE: &str = "vaults.json";
-const DEFAULT_LEND_PROFILE: &str = "jito";
-const DEFAULT_BORROW_PROFILE: &str = "sol";
+const DEFAULT_LEND_MINT: &str = "jito";
+const DEFAULT_BORROW_MINT: &str = "sol";
 
 pub struct BuilderConfig {
     rpc_url: String,
     data_path: String,
     kamino_file: String,
     vault_file: String,
-    lend_profile: String,
-    borrow_profile: String,
+    lend_mint: String,
+    borrow_mint: String,
 }
 
 impl Default for BuilderConfig {
@@ -29,8 +29,8 @@ impl Default for BuilderConfig {
             data_path: DEFAULT_DATA_PATH.to_string(),
             kamino_file: DEFAULT_KAMINO_FILE.to_string(),
             vault_file: DEFAULT_VAULT_FILE.to_string(),
-            lend_profile: DEFAULT_LEND_PROFILE.to_string(),
-            borrow_profile: DEFAULT_BORROW_PROFILE.to_string(),
+            lend_mint: DEFAULT_LEND_MINT.to_string(),
+            borrow_mint: DEFAULT_BORROW_MINT.to_string(),
         }
     }
 }
@@ -56,13 +56,13 @@ impl BuilderConfig {
         self
     }
 
-    pub fn with_lend_profile(mut self, lend_profile: impl Into<String>) -> Self {
-        self.lend_profile = lend_profile.into();
+    pub fn with_lend_mint(mut self, lend_mint: impl Into<String>) -> Self {
+        self.lend_mint = lend_mint.into();
         self
     }
 
-    pub fn with_borrow_profile(mut self, borrow_profile: impl Into<String>) -> Self {
-        self.borrow_profile = borrow_profile.into();
+    pub fn with_borrow_mint(mut self, borrow_mint: impl Into<String>) -> Self {
+        self.borrow_mint = borrow_mint.into();
         self
     }
 
@@ -78,8 +78,8 @@ impl BuilderConfig {
         // Load configurations
         let kamino_config = KaminoConfig::new(
             kamino_path.to_str().expect("Invalid path"),
-            &self.lend_profile,
-            &self.borrow_profile,
+            &self.lend_mint,
+            &self.borrow_mint,
         )
         .expect("Failed to load Kamino config");
 
