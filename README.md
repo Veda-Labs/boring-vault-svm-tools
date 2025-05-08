@@ -21,11 +21,7 @@ Key features:
    ```
 
 2. Set up Python environment and install the package
-
    ```bash
-   # Navigate to the python example directory
-   cd python
-
    # Create and activate virtual environment (if not already done)
    python -m venv venv
    # Install the package using maturin
