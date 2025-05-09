@@ -13,6 +13,7 @@ use crate::{
 use crate::builder::Builder;
 
 use eyre::Result;
+use solana_pubkey::Pubkey;
 
 impl Builder {
     pub fn init_user_metadata(
@@ -128,6 +129,28 @@ impl Builder {
         Ok(())
     }
 
+    pub fn refresh_reserve(
+        &mut self,
+        vault_id: u64,
+        sub_account: u8,
+        reserve: Pubkey,
+    ) -> Result<()> {
+        let ix = KaminoRefreshReserve::new(
+            vault_id,
+            sub_account,
+            reserve,
+            self.kamino_config.lending_market,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            KAMINO_PROGRAM_ID,
+            self.kamino_config.oracle_prices,
+        );
+
+        self.instructions.push(ix.to_instruction());
+
+        Ok(())
+    }
+
     pub fn refresh_reserves(
         &mut self,
         signer: KeypairOrPublickey,
@@ -135,30 +158,8 @@ impl Builder {
         vault_id: u64,
         sub_account: u8,
     ) -> Result<()> {
-        let refresh_lend = KaminoRefreshReserve::new(
-            vault_id,
-            sub_account,
-            self.kamino_config.lend.reserve,
-            self.kamino_config.lending_market,
-            KAMINO_PROGRAM_ID,
-            KAMINO_PROGRAM_ID,
-            KAMINO_PROGRAM_ID,
-            self.kamino_config.oracle_prices,
-        );
-
-        let refresh_borrow = KaminoRefreshReserve::new(
-            vault_id,
-            sub_account,
-            self.kamino_config.borrow.reserve,
-            self.kamino_config.lending_market,
-            KAMINO_PROGRAM_ID,
-            KAMINO_PROGRAM_ID,
-            KAMINO_PROGRAM_ID,
-            self.kamino_config.oracle_prices,
-        );
-
-        self.instructions.push(refresh_borrow.to_instruction());
-        self.instructions.push(refresh_lend.to_instruction());
+        self.refresh_reserve(vault_id, sub_account, self.kamino_config.lend.reserve)?;
+        self.refresh_reserve(vault_id, sub_account, self.kamino_config.borrow.reserve)?;
 
         self.add_signer_if_keypair(signer);
         if let Some(authority) = authority {
