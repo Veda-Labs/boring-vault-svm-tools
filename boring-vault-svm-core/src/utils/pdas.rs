@@ -1,7 +1,13 @@
 use super::bindings::boring_vault_svm;
 use super::constants::*;
+use eyre::Result;
 use solana_address_lookup_table_interface::instruction::derive_lookup_table_address;
+use solana_client::rpc_client::RpcClient;
+use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
+use solana_sdk::hash::hash;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::instruction::create_associated_token_account;
 
 pub fn get_lut_pda(authority: &Pubkey, recent_block_slot: u64) -> Pubkey {
     let res = derive_lookup_table_address(authority, recent_block_slot);
@@ -87,4 +93,87 @@ pub fn get_obligation(
 
 pub fn get_lending_market_authority(lending_market: &Pubkey, program_id: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[b"lma", lending_market.as_ref()], program_id).0
+}
+
+pub fn get_obligation_farm(farm_state: &Pubkey, delegatee: &Pubkey, program_id: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[b"user", farm_state.as_ref(), delegatee.as_ref()],
+        program_id,
+    )
+    .0
+}
+
+pub fn ensure_ata(
+    client: &RpcClient,
+    signer: &Pubkey,
+    owner: &Pubkey,
+    mint: &Pubkey,
+    token_program_id: &Pubkey,
+) -> Result<(Pubkey, Option<Instruction>)> {
+    let ata = get_associated_token_address_with_program_id(owner, mint, token_program_id);
+
+    let instruction = match client.get_account(&ata) {
+        Ok(_) => None, // Account exists, no instruction needed
+        Err(_) => Some(create_associated_token_account(
+            signer,
+            owner,
+            mint,
+            token_program_id,
+        )),
+    };
+
+    Ok((ata, instruction))
+}
+
+pub fn get_cpi_digest(
+    vault_id: u64,
+    ix_program_id: &Pubkey,
+    ix_data: Vec<u8>,
+    ix_remaining_accounts: Vec<AccountMeta>,
+    operators: boring_vault_svm::types::Operators,
+) -> Result<(Pubkey, [u8; 32])> {
+    let mut hash_data: Vec<u8> = Vec::new();
+
+    hash_data.extend(ix_program_id.to_bytes());
+
+    for operator in &operators.operators {
+        match operator {
+            boring_vault_svm::types::Operator::Noop => {}
+            boring_vault_svm::types::Operator::IngestInstruction(ix_index, length) => {
+                let from = *ix_index as usize;
+                let to = from + (*length as usize);
+                if to > ix_data.len() {
+                    return Err(eyre::eyre!(
+                        "IngestInstruction bounds [{},{}] out of range for ix_data len {}",
+                        from,
+                        to,
+                        ix_data.len()
+                    ));
+                }
+                hash_data.extend_from_slice(&ix_data[from..to]);
+            }
+            boring_vault_svm::types::Operator::IngestAccount(account_index) => {
+                let idx = *account_index as usize;
+                if idx >= ix_remaining_accounts.len() {
+                    return Err(eyre::eyre!(
+                         "IngestAccount index {} out of bounds. Combined accounts len: {}. Accounts: {:?}",
+                         idx, ix_remaining_accounts.len(), ix_remaining_accounts.iter().map(|a| a.pubkey).collect::<Vec<_>>()
+                     ));
+                }
+                // Use the combined_accounts list for indexing
+                let account = &ix_remaining_accounts[idx];
+                hash_data.extend_from_slice(account.pubkey.as_ref());
+                hash_data.push(account.is_signer as u8);
+                hash_data.push(account.is_writable as u8);
+            }
+            boring_vault_svm::types::Operator::IngestInstructionDataSize => {
+                hash_data.extend_from_slice(&(ix_data.len() as u64).to_le_bytes());
+            }
+        }
+    }
+
+    let digest = hash(&hash_data).to_bytes();
+    let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
+
+    Ok((cpi_digest_pda, digest))
 }

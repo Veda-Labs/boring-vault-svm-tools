@@ -21,17 +21,11 @@ Key features:
    ```
 
 2. Set up Python environment and install the package
-
    ```bash
-   # Navigate to the python example directory
-   cd python_example
-
    # Create and activate virtual environment (if not already done)
    python -m venv venv
-   source venv/bin/activate
-
    # Install the package using maturin
-   maturin develop -m ../../boring-vault-svm-py/Cargo.toml
+   . ./scripts/python_ini.sh
    ```
 
 3. Start the Solana test validator

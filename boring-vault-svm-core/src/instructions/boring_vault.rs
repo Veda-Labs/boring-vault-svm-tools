@@ -5,11 +5,10 @@ use eyre::Result;
 use solana_client::rpc_client::RpcClient;
 use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
-use solana_sdk::hash::hash;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use spl_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
+use crate::utils::{ensure_ata, get_cpi_digest};
 use crate::KeypairOrPublickey;
 use crate::{
     manage_instructions::ExternalInstruction,
@@ -107,6 +106,541 @@ pub fn create_deploy_instruction(
     Ok(instruction)
 }
 
+pub fn create_pause_instruction(vault_id: u64, signer: &Pubkey) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let pause_ix_data = boring_vault_svm::client::args::Pause { vault_id }.data();
+
+    // Create the instruction
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: pause_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_unpause_instruction(vault_id: u64, signer: &Pubkey) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let unpause_ix_data = boring_vault_svm::client::args::Unpause { vault_id }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: unpause_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_transfer_authority_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    pending_authority: &Pubkey,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let transfer_authority_ix_data = boring_vault_svm::client::args::TransferAuthority {
+        vault_id,
+        pending_authority: *pending_authority,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: transfer_authority_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_accept_authority_instruction(vault_id: u64, signer: &Pubkey) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let accept_authority_ix_data =
+        boring_vault_svm::client::args::AcceptAuthority { vault_id }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: accept_authority_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_close_cpi_digest_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    digest: [u8; 32],
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+        AccountMeta::new(cpi_digest_pda, false),
+    ];
+
+    let close_cpi_digest_ix_data =
+        boring_vault_svm::client::args::CloseCpiDigest { vault_id, digest }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: close_cpi_digest_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_update_exchange_rate_provider_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    new_provider: &Pubkey,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let update_exchange_rate_provider_ix_data =
+        boring_vault_svm::client::args::UpdateExchangeRateProvider {
+            vault_id,
+            new_provider: *new_provider,
+        }
+        .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: update_exchange_rate_provider_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_withdraw_authority_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    new_authority: &Pubkey,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let set_withdraw_authority_ix_data = boring_vault_svm::client::args::SetWithdrawAuthority {
+        vault_id,
+        new_authority: *new_authority,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: set_withdraw_authority_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_payout_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    new_payout: &Pubkey,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let set_payout_ix_data = boring_vault_svm::client::args::SetPayout {
+        vault_id,
+        new_payout: *new_payout,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: set_payout_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_configure_exchange_rate_update_bounds_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    upper_bound: u16,
+    lower_bound: u16,
+    minimum_update_delay: u32,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let args = boring_vault_svm::types::ConfigureExchangeRateUpdateBoundsArgs {
+        upper_bound,
+        lower_bound,
+        minimum_update_delay,
+    };
+
+    let configure_exchange_rate_update_bounds_ix_data =
+        boring_vault_svm::client::args::ConfigureExchangeRateUpdateBounds { vault_id, args }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: configure_exchange_rate_update_bounds_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_fees_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    platform_fee_bps: u16,
+    performance_fee_bps: u16,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let set_fees_ix_data = boring_vault_svm::client::args::SetFees {
+        vault_id,
+        platform_fee_bps,
+        performance_fee_bps,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: set_fees_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_set_strategist_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    new_strategist: &Pubkey,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let accounts = vec![
+        AccountMeta::new(*signer, true),
+        AccountMeta::new(vault_state_pda, false),
+    ];
+
+    let set_strategist_ix_data = boring_vault_svm::client::args::SetStrategist {
+        vault_id,
+        new_strategist: *new_strategist,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts,
+        data: set_strategist_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_update_exchange_rate_instruction(
+    vault_id: u64,
+    signer: &Pubkey,
+    new_exchange_rate: u64,
+) -> Result<Instruction> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+
+    let share_mint = get_vault_share_mint(vault_state_pda);
+
+    let accounts = boring_vault_svm::client::accounts::UpdateExchangeRate {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+        share_mint,
+    };
+
+    let update_exchange_rate_ix_data = boring_vault_svm::client::args::UpdateExchangeRate {
+        vault_id,
+        new_exchange_rate,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: update_exchange_rate_ix_data,
+    };
+
+    Ok(instruction)
+}
+
+pub fn create_claim_fees_in_base_instruction(
+    client: &RpcClient,
+    vault_id: u64,
+    sub_account: u8,
+    signer: &Pubkey,
+) -> Result<Vec<Instruction>> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let vault_pda = get_vault_pda(vault_id, sub_account);
+    let vault_state_account = client.get_account(&vault_state_pda)?;
+    let vault_state = boring_vault_svm::accounts::BoringVault::try_deserialize(
+        &mut &vault_state_account.data[..],
+    )?;
+
+    let base_asset = vault_state.teller.base_asset;
+    let payout_address = vault_state.teller.payout_address;
+    let base_mint_account = client.get_account(&base_asset)?;
+    let token_program_id = base_mint_account.owner;
+
+    let mut instructions = vec![];
+
+    let (payout_ata, payout_instruction) = ensure_ata(
+        client,
+        signer,
+        &payout_address,
+        &base_asset,
+        &token_program_id,
+    )?;
+
+    let (vault_ata, vault_instruction) =
+        ensure_ata(client, signer, &vault_pda, &base_asset, &token_program_id)?;
+
+    instructions.extend(payout_instruction.into_iter().chain(vault_instruction));
+
+    let accounts = boring_vault_svm::client::accounts::ClaimFeesInBase {
+        signer: *signer,
+        base_mint: base_asset,
+        boring_vault_state: vault_state_pda,
+        boring_vault: vault_pda,
+        payout_ata,
+        vault_ata,
+        token_program: spl_token::ID,
+        token_program_2022: TOKEN_2022_PROGRAM_ID,
+        system_program: system_program::ID,
+    };
+
+    let claim_fees_in_base_ix_data = boring_vault_svm::client::args::ClaimFeesInBase {
+        vault_id,
+        sub_account,
+    }
+    .data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: claim_fees_in_base_ix_data,
+    };
+
+    instructions.push(instruction);
+
+    Ok(instructions)
+}
+
+pub fn create_deposit_instruction(
+    client: &RpcClient,
+    vault_id: u64,
+    signer: &Pubkey,
+    deposit_mint: &Pubkey,
+    deposit_amount: u64,
+    min_mint_amount: u64,
+) -> Result<Vec<Instruction>> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let vault_state_account = client.get_account(&vault_state_pda)?;
+    let vault_state = boring_vault_svm::accounts::BoringVault::try_deserialize(
+        &mut &vault_state_account.data[..],
+    )?;
+
+    let vault_pda = get_vault_pda(vault_id, vault_state.config.deposit_sub_account);
+    let share_mint = get_vault_share_mint(vault_state_pda);
+
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, *deposit_mint);
+    let asset_data_account = client.get_account(&asset_data_pda)?;
+    let asset_data =
+        boring_vault_svm::accounts::AssetData::try_deserialize(&mut &asset_data_account.data[..])?;
+    let price_feed = asset_data.price_feed;
+
+    let deposit_mint_account = client.get_account(deposit_mint)?;
+    let token_program_id = deposit_mint_account.owner;
+
+    let mut instructions = vec![];
+
+    let (user_ata, user_instruction) =
+        ensure_ata(client, signer, signer, deposit_mint, &token_program_id)?;
+
+    let (vault_ata, vault_instruction) =
+        ensure_ata(client, signer, &vault_pda, deposit_mint, &token_program_id)?;
+
+    let (user_share_ata, user_share_instruction) =
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
+
+    instructions.extend(
+        user_instruction
+            .into_iter()
+            .chain(vault_instruction)
+            .chain(user_share_instruction),
+    );
+
+    let accounts = boring_vault_svm::client::accounts::Deposit {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+        boring_vault: vault_pda,
+        deposit_mint: *deposit_mint,
+        asset_data: asset_data_pda,
+        user_ata,
+        vault_ata,
+        token_program: spl_token::ID,
+        token_program_2022: TOKEN_2022_PROGRAM_ID,
+        system_program: system_program::ID,
+        associated_token_program: ASSOCIATED_TOKEN_PROGRAM_ID,
+        share_mint,
+        user_shares: user_share_ata,
+        price_feed,
+    };
+
+    let args = boring_vault_svm::types::DepositArgs {
+        vault_id,
+        deposit_amount,
+        min_mint_amount,
+    };
+
+    let deposit_ix_data = boring_vault_svm::client::args::Deposit { args }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: deposit_ix_data,
+    };
+
+    instructions.push(instruction);
+
+    Ok(instructions)
+}
+
+pub fn create_withdraw_instruction(
+    client: &RpcClient,
+    vault_id: u64,
+    signer: &Pubkey,
+    withdraw_mint: &Pubkey,
+    share_amount: u64,
+    min_assets_amount: u64,
+) -> Result<Vec<Instruction>> {
+    let vault_state_pda = get_vault_state_pda(vault_id);
+    let vault_state_account = client.get_account(&vault_state_pda)?;
+    let vault_state = boring_vault_svm::accounts::BoringVault::try_deserialize(
+        &mut &vault_state_account.data[..],
+    )?;
+
+    let withdraw_sub_account = vault_state.config.withdraw_sub_account;
+    let vault_pda = get_vault_pda(vault_id, withdraw_sub_account);
+    let share_mint = get_vault_share_mint(vault_state_pda);
+
+    let asset_data_pda = get_asset_data_pda(vault_state_pda, *withdraw_mint);
+    let asset_data_account = client.get_account(&asset_data_pda)?;
+    let asset_data =
+        boring_vault_svm::accounts::AssetData::try_deserialize(&mut &asset_data_account.data[..])?;
+    let price_feed = asset_data.price_feed;
+
+    let withdraw_mint_account = client.get_account(withdraw_mint)?;
+    let token_program_id = withdraw_mint_account.owner;
+
+    let mut instructions = vec![];
+
+    let (user_ata, user_instruction) =
+        ensure_ata(client, signer, signer, withdraw_mint, &token_program_id)?;
+
+    let (vault_ata, vault_instruction) =
+        ensure_ata(client, signer, &vault_pda, withdraw_mint, &token_program_id)?;
+
+    let (user_share_ata, user_share_instruction) =
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
+
+    instructions.extend(
+        user_instruction
+            .into_iter()
+            .chain(vault_instruction)
+            .chain(user_share_instruction),
+    );
+
+    let accounts = boring_vault_svm::client::accounts::Withdraw {
+        signer: *signer,
+        boring_vault_state: vault_state_pda,
+        boring_vault: vault_pda,
+        withdraw_mint: *withdraw_mint,
+        asset_data: asset_data_pda,
+        user_ata,
+        vault_ata,
+        token_program: spl_token::ID,
+        token_program_2022: TOKEN_2022_PROGRAM_ID,
+        share_mint,
+        user_shares: user_share_ata,
+        price_feed,
+    };
+
+    let args = boring_vault_svm::types::WithdrawArgs {
+        vault_id,
+        share_amount,
+        min_assets_amount,
+    };
+
+    let withdraw_ix_data = boring_vault_svm::client::args::Withdraw { args }.data();
+
+    let instruction = solana_program::instruction::Instruction {
+        program_id: boring_vault_svm::ID,
+        accounts: accounts.to_account_metas(None),
+        data: withdraw_ix_data,
+    };
+
+    instructions.extend(vec![instruction]);
+
+    Ok(instructions)
+}
+
+// STRATEGIST INSTRUCTIONS
+
 pub fn create_manage_instruction<T: ExternalInstruction>(
     client: &RpcClient,
     signer: &KeypairOrPublickey,
@@ -116,11 +650,11 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
     let mut instructions = vec![];
 
     // Get the signer's public key
-    let signer_pubkey = signer.pubkey();
+    // let signer_pubkey = signer.pubkey();
 
     // Call get_cpi_digest with the signer's public key
     let (cpi_digest_pda, digest) = get_cpi_digest(
-        &signer_pubkey, // Pass the public key reference
+        // &signer_pubkey, // Pass the public key reference
         eix.vault_id(),
         &eix.ix_program_id(), // Pass reference to the returned Pubkey
         eix.ix_data(),
@@ -179,7 +713,6 @@ pub fn create_manage_instruction<T: ExternalInstruction>(
 
     let manage_ix_data = boring_vault_svm::client::args::Manage { args }.data();
 
-    // Create the instruction
     let instruction = solana_program::instruction::Instruction {
         program_id: boring_vault_svm::ID,
         accounts,
@@ -244,22 +777,29 @@ pub fn create_update_asset_data_instruction(
 }
 
 pub fn create_deposit_sol_instruction(
+    client: &RpcClient,
     signer: &Pubkey,
     vault_id: u64,
-    user_pubkey: &Pubkey,
     deposit_amount: u64,
     min_mint_amount: u64,
-) -> Result<Instruction> {
+) -> Result<Vec<Instruction>> {
     let vault_state_pda = get_vault_state_pda(vault_id);
+    let vault_state_account = client.get_account(&vault_state_pda)?;
+    let vault_state_data = boring_vault_svm::accounts::BoringVault::try_deserialize(
+        &mut &vault_state_account.data[..],
+    )?;
     let native_mint = Pubkey::new_from_array([0; 32]);
     let asset_data_pda = get_asset_data_pda(vault_state_pda, native_mint);
-    let vault_pda = get_vault_pda(vault_id, 0); // NOTE need to actually read state to see what deposit sub account is
+    let vault_pda = get_vault_pda(vault_id, vault_state_data.config.deposit_sub_account);
     let share_mint = get_vault_share_mint(vault_state_pda);
-    let user_share_ata = get_associated_token_address_with_program_id(
-        user_pubkey,
-        &share_mint,
-        &TOKEN_2022_PROGRAM_ID,
-    );
+
+    let mut instructions = vec![];
+
+    let (user_share_ata, user_instruction) =
+        ensure_ata(client, signer, signer, &share_mint, &TOKEN_2022_PROGRAM_ID)?;
+
+    instructions.extend(user_instruction);
+
     let accounts = boring_vault_svm::client::accounts::DepositSol {
         signer: *signer,
         token_program_2022: TOKEN_2022_PROGRAM_ID,
@@ -288,7 +828,9 @@ pub fn create_deposit_sol_instruction(
         data: deposit_sol_ix_data,
     };
 
-    Ok(instruction)
+    instructions.extend(vec![instruction]);
+
+    Ok(instructions)
 }
 
 pub fn create_set_deposit_sub_account_instruction(
@@ -379,88 +921,6 @@ pub fn create_initialize_cpi_digest_instruction(
     };
 
     Ok(instruction)
-}
-
-// Needs remaining accounts
-fn get_cpi_digest(
-    signer_pubkey: &Pubkey,
-    vault_id: u64,
-    ix_program_id: &Pubkey,
-    ix_data: Vec<u8>,
-    ix_remaining_accounts: Vec<AccountMeta>,
-    operators: boring_vault_svm::types::Operators,
-) -> Result<(Pubkey, [u8; 32])> {
-    let mut hash_data: Vec<u8> = Vec::new();
-
-    // Start hashing with the inner instruction's program ID
-    hash_data.extend(ix_program_id.to_bytes());
-
-    // --- Construct the combined account list to mimic on-chain context ---
-    // Order: Implicit accounts (from ViewCpiDigest), Payer, Remaining Accounts
-    // Note: This assumes a plausible order. Exact runtime reordering is complex to replicate.
-
-    // 1. Implicit account from ViewCpiDigest context
-    let implicit_ix_program_id_meta = AccountMeta {
-        pubkey: *ix_program_id,
-        is_signer: false,
-        is_writable: false,
-    };
-
-    // 2. Transaction fee payer (signer)
-    let signer_meta = AccountMeta {
-        pubkey: *signer_pubkey,
-        is_signer: true,   // Runtime marks fee payer as signer
-        is_writable: true, // Runtime marks fee payer as writable
-    };
-
-    // 3. Combine the accounts
-    let mut combined_accounts = vec![implicit_ix_program_id_meta, signer_meta];
-    combined_accounts.extend(ix_remaining_accounts.iter().cloned()); // Use cloned accounts
-
-    // --- Apply operators using the combined list ---
-    for operator in &operators.operators {
-        match operator {
-            boring_vault_svm::types::Operator::Noop => {}
-            boring_vault_svm::types::Operator::IngestInstruction(ix_index, length) => {
-                let from = *ix_index as usize;
-                let to = from + (*length as usize);
-                if to > ix_data.len() {
-                    return Err(eyre::eyre!(
-                        "IngestInstruction bounds [{},{}] out of range for ix_data len {}",
-                        from,
-                        to,
-                        ix_data.len()
-                    ));
-                }
-                hash_data.extend_from_slice(&ix_data[from..to]);
-            }
-            boring_vault_svm::types::Operator::IngestAccount(account_index) => {
-                let idx = *account_index as usize;
-                if idx >= combined_accounts.len() {
-                    return Err(eyre::eyre!(
-                         "IngestAccount index {} out of bounds. Combined accounts len: {}. Accounts: {:?}",
-                         idx, combined_accounts.len(), combined_accounts.iter().map(|a| a.pubkey).collect::<Vec<_>>()
-                     ));
-                }
-                // Use the combined_accounts list for indexing
-                let account = &combined_accounts[idx];
-                hash_data.extend_from_slice(account.pubkey.as_ref());
-                hash_data.push(account.is_signer as u8);
-                hash_data.push(account.is_writable as u8);
-            }
-            boring_vault_svm::types::Operator::IngestInstructionDataSize => {
-                hash_data.extend_from_slice(&(ix_data.len() as u64).to_le_bytes());
-            }
-        }
-    }
-
-    // Calculate the final digest
-    let digest = hash(&hash_data).to_bytes();
-
-    // Get the PDA for this digest
-    let cpi_digest_pda = get_cpi_digest_pda(vault_id, digest);
-
-    Ok((cpi_digest_pda, digest))
 }
 
 fn get_vault_id(client: &RpcClient) -> Result<u64> {

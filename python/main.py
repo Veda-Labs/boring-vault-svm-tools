@@ -8,7 +8,7 @@ import json
 # Default funded keypair
 def get_default_keypair_secret():
     home = str(Path.home())
-    with open(f"{home}/.config/solana/veda.json", "r") as f:
+    with open(f"{home}/.config/solana/id.json", "r") as f:
         secret_key_data = json.load(f)
         return bytes(secret_key_data)
 
@@ -25,8 +25,14 @@ async def main():
         # Create builder
         print("Creating builder...")
         # builder = boring_vault_svm.TransactionBuilder("http://127.0.0.1:8899")
-        builder = boring_vault_svm.TransactionBuilder("https://api.mainnet-beta.solana.com")
-
+        builder = boring_vault_svm.Builder(
+            rpc_url="https://api.mainnet-beta.solana.com",
+            data_path = None,
+            kamino_file = None,
+            vault_file = None,
+            lend_mint = None,
+            borrow_mint = None
+        )
         authority_pubkey_str = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
 
         # Add instructions
@@ -59,43 +65,160 @@ async def main():
         # builder.update_asset_data(
         #         signer_bytes=signer_bytes,
         #         vault_id=3,
-        #         mint="11111111111111111111111111111111",
+        #         mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
         #         allow_deposits=True,  # allow_deposits
         #         allow_withdrawals=True,  # allow_withdrawals
         #         share_premium_bps=0,     # share_premium_bps
-        #         is_pegged_to_base_asset=True, # is_pegged_to_base_asset
-        #         price_feed="11111111111111111111111111111111",
+        #         is_pegged_to_base_asset=False, # is_pegged_to_base_asset
+        #         price_feed="4Z1SLH9g4ikNBV8uP2ZctEouqjYmVqB2Tz5SZxKYBN7z",
         #         inverse_price_feed=False, # inverse_price_feed
-        #         max_staleness=0,    # max_staleness
-        #         min_samples=0,     # min_samples
+        #         max_staleness=150,    # max_staleness
+        #         min_samples=3,     # min_samples
+        # )
+
+        # print("Pausing vault...")
+        # builder.pause(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3
+        # )
+        
+        # print("Unpausing vault...")
+        # builder.unpause(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3
+        # )
+
+        # print("Transferring authority...")
+        # new_pending_authority = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
+        # builder.transfer_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     pending_authority=new_pending_authority
+        # )
+
+        # print("Accepting authority...")
+        # builder.accept_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3
+        # )
+
+        # print("Closing CPI digest...")
+        # digest = [0] * 32  # Replace with actual digest bytes
+        # builder.close_cpi_digest(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=vault_id,
+        #     digest=digest
+        # )
+
+        # print("Updating exchange rate provider...")
+        # new_provider = "31Uys8oYqNAiRUKR9i24qLaG5ninMFuXckpkfV3FaPDp"
+        # builder.update_exchange_rate_provider(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_provider=new_provider
+        # )
+
+        # print("Configuring exchange rate update bounds...")
+        # builder.configure_exchange_rate_update_bounds(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     upper_bound=10500,  # 105% (in basis points)
+        #     lower_bound=9500,   # 95% (in basis points)
+        #     minimum_update_delay=4200  # 1 hour in seconds
+        # )
+
+        # print("Updating exchange rate...")
+        # builder.update_exchange_rate(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_exchange_rate=1_050_000_000  # 1.05 with 9 decimals
+        # )
+
+        # print("Setting fees...")
+        # builder.set_fees(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     platform_fee_bps=50,    # 0.5% platform fee
+        #     performance_fee_bps=100 # 1% performance fee
+        # )
+
+        # print("Setting payout address...")
+        # new_payout = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
+        # builder.set_payout(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_payout=new_payout
+        # )
+
+        # print("Claiming fees in base asset...")
+        # builder.claim_fees_in_base(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=0
+        # )
+
+        # print("Setting withdraw authority...")
+        # new_withdraw_authority = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
+        # builder.set_withdraw_authority(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_authority=new_withdraw_authority
+        # )
+
+        # print("Setting strategist...")
+        # new_strategist = "CSsqdfpwwBK8iueo9CuTLHc1M2uubj88UwXKCgZap7H2"
+        # builder.set_strategist(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     new_strategist=new_strategist
         # )
 
         # print("Depositing SOL...")
         # builder.deposit_sol(
         #     signer_bytes=signer_bytes,
-        #     vault_id=1,
-        #     user_pubkey=authority_pubkey_str,
-        #     deposit_amount=100000000, # deposit_amount in lamports
+        #     vault_id=3,
+        #     deposit_amount=10000000, # deposit_amount in lamports
         #     min_mint_amount=0,          # min_mint_amount
+        # )
+
+        # print("Depositing tokens...")
+        # token_mint = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+        # builder.deposit(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     deposit_mint=token_mint,
+        #     deposit_amount=1_000_000,
+        #     min_mint_amount=0
         # )
 
         # print("Sending instructions as one bundle...")
         # tx_hash = builder.try_bundle_all(signer_bytes)
         # print(f"Success! Transaction hash: {tx_hash}")
 
-        print("Transferring SOL from sub account 0 to sub account 1")
-        builder.manage_transfer_sol_between_sub_accounts(
-            signer_bytes=signer_bytes,
-            authority_bytes=None,  # or None if no authority needed
-            vault_id=3,  # your vault ID
-            sub_account=0,  # source sub account
-            to_sub_account=2,  # destination sub account
-            amount=10000  # amount in lamports
-        )
 
-        print("Sending instructions as one bundle...")
-        tx_hash = builder.try_bundle_all(signer_bytes)
-        print(f"Success! Transaction hash: {tx_hash}")
+        # print("Withdrawing tokens...")
+        # withdraw_mint = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+        # builder.withdraw(
+        #     signer_bytes=signer_bytes,
+        #     vault_id=3,
+        #     withdraw_mint=withdraw_mint,
+        #     share_amount=1_000,
+        #     min_asset_amount=0
+        # )
+
+        # print("Transferring SOL from sub account 0 to sub account 1")
+        # builder.manage_transfer_sol_between_sub_accounts(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=None,  # or None if no authority needed
+        #     vault_id=3,  # your vault ID
+        #     sub_account=0,  # source sub account
+        #     to_sub_account=2,  # destination sub account
+        #     amount=10000  # amount in lamports
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting deposit sub-account...")
         # builder.set_deposit_sub_account(
@@ -103,10 +226,6 @@ async def main():
         #     vault_id=3,
         #     new_sub_account=2
         # )
-
-        # print("Sending instructions as one bundle...")
-        # tx_hash = builder.try_bundle_all(signer_bytes)
-        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Setting withdraw sub-account...")
         # builder.set_withdraw_sub_account(
@@ -131,83 +250,86 @@ async def main():
         # builder.manage_kamino_init_obligation(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     user_metadata="CXvftRiAuz19jsRWQoLEHz6geWhCnbGE435wKK7Ggrdz",
-        #     lending_market="6WVSwDQXrBZeQVnu6hpnsRZhodaJTZBUaC334SiiBKdb",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
         #     tag=0,
         #     id=0,
         # )
+ 
+        # print("Calling lend jitoSOL...")
+        # builder.lend(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     amount=25650000,
+        #     tag=0,
+        #     id=0,
+        # )
+
+        # print("Borrowing jitoSOL...")
+        # builder.borrow(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,  # or None if no authority needed
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     amount=10,
+        #     tag=0,
+        #     id=0,
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Calling init obligation farms for reserve")
         # builder.manage_kamino_init_obligation_farms_for_reserve(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     obligation="781awWryvHWQpBLFzt2bVAbP2au9VmTsNAScDMaTHZFB",
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
-        #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
         #     mode=0,
         # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # print("Refreshing price list...")
         # builder.manage_kamino_refresh_price_list(
         #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     oracle_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",  # example oracle prices account
-        #     oracle_mapping="Chpu5ZgfWX5ZzVpUx9Xvv4WPM75Xd7zPJNDPsFnCpLpk",  # example oracle mapping account
-        #     oracle_twaps="GbpsVomudPRRwmqfTmo3MYQVTikPG6QXxqpzJexA1JRb",  # example oracle twaps account
-        #     price_accounts=[
-        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
-        #         "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb", 
-        #         "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE", 
-        #     ],
-        #     tokens=[51, 0, 51, 52]  
+        #     vault_id=3,
+        #     sub_account=2,
         # )
 
         # print("Refreshing Kamino Reserve")
         # builder.manage_kamino_refresh_reserve(
         #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     pyth_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     switchboard_price_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     switchboard_twap_oracle="KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
-        #     scope_prices="3NJYftD5sjVfxSnUdZ1wVML8f3aC6mp1CXCL6L7TnU8C",
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
         # )
 
         # print("Refreshing obligation")
         # builder.manage_kamino_refresh_obligation(
         #     signer_bytes=signer_bytes,
-        #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
+        #     tag=0,
+        #     id=0,
         # )
 
         # print("Calling refresh obligation farms for reserve")
         # builder.manage_kamino_refresh_obligation_farms_for_reserve(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     reserve_farm_state="B4mX639wYzxmMVgPno2wZUEPjTdbDGs5VD7TG7FNmy7P",
-        #     obligation_farm="GZGqnppbrZeBwmW8413jtj7pPNtdJo8CmN69Ymq8Dg8t", # THIS IS A PDA THAT I AM NOT SURE HOW TO DERIVE, BUT I PULLED IT FROM THE LOGS
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     farms_program="FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
         #     mode=0,
         # )
 
@@ -215,17 +337,26 @@ async def main():
         # builder.manage_kamino_deposit(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     lending_market="H6rHXmXoCQvq8Ue81MqNh7ow5ysPa1dSozwW3PU1dDH6",
-        #     obligation="G3LqPW4tXMDUnMzRouJgkoYFVAVKtPQSZMHwEa3mFj5w",
-        #     reserve="F9HdecRG8GPs9LEn4S5VfeJVEZVqrDJFR6bvmQTi22na",
-        #     reserve_liquidity_mint="J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",  # JitoSOL
-        #     reserve_liquidity_supply="5cRbUeR6cxaUNtuLcoZjFcxDLa1bQC2sGKLj4sF5W9JE",
-        #     reserve_collateral_mint="JAxQmErztKmJsBRbqigNxa62WYkUWcuSioJ3o3cuUywR",
-        #     reserve_destination_deposit_collateral="3srCNFNLoWK2p6EyjDLt7mxY3724X6umTVHQey8sShzm",
-        #     amount=100000,  # amount in lamports (0.0001 JitoSOL)
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     tag=0,
+        #     id=0,
+        #     amount=1000000,  # amount in lamports (0.0001 JitoSOL)
         # )
+
+        # builder.manage_kamino_borrow(
+        #     signer_bytes=signer_bytes,
+        #     authority_bytes=signer_bytes,
+        #     vault_id=3,
+        #     sub_account=2,
+        #     tag=0,
+        #     id=0,
+        #     amount=1,
+        # )
+
+        # print("Sending instructions as one bundle...")
+        # tx_hash = builder.try_bundle_all(signer_bytes)
+        # print(f"Success! Transaction hash: {tx_hash}")
 
         # Example usage
         # print("Depositing solend")
@@ -289,9 +420,33 @@ async def main():
         # builder.manage_mint_jito_sol(
         #     signer_bytes=signer_bytes,
         #     authority_bytes=signer_bytes,  # or None if no authority needed
-        #     vault_id=1,  # your vault ID
-        #     sub_account=0,  # source sub account
-        #     amount=100000  # amount in lamports (0.0001 SOL)
+        #     vault_id=3,  # your vault ID
+        #     sub_account=2,  # source sub account
+        #     amount=30000000  # amount in lamports (0.0001 SOL)
+        # )
+
+        # print("Getting lend digest...")
+        # data = builder.get_lend_digest(
+        #     vault_id=3,
+        #     sub_account=2,
+        #     tag=0,
+        #     id=0
+        # )
+
+        print("Getting borrow digest...")
+        data = builder.get_borrow_digest(
+            vault_id=3,
+            sub_account=2,
+            tag=0,
+            id=0
+        )
+
+        print(data)
+
+        # print("Getting jito digest...")
+        # builder.get_jito_digest(
+        #     vault_id=3,
+        #     sub_account=2
         # )
 
         # print("Sending instructions as one bundle...")

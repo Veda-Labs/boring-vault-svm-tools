@@ -1,16 +1,24 @@
-use boring_vault_svm_core::generate_vanity_keypair;
-use solana_keypair::Keypair;
-use solana_signer::Signer;
+use std::str::FromStr;
 
-fn main() {
-    // Try to find a keypair starting with "sol" within 1M iterations
-    match generate_vanity_keypair("crispy", 1_000_000_000) {
-        Ok(keypair_bytes) => {
-            let keypair = Keypair::from_bytes(&keypair_bytes).unwrap();
-            println!("Found vanity keypair!");
-            println!("Public key: {}", keypair.pubkey());
-            println!("Private key bytes: {keypair_bytes:?}");
-        }
-        Err(e) => println!("Error: {e}"),
-    }
+use boring_vault_svm_core::{builder::Builder, view::get_asset_data};
+use eyre::Result;
+use solana_pubkey::Pubkey;
+
+fn main() -> Result<()> {
+    let rpc_url = "https://api.mainnet-beta.solana.com";
+    let tb = Builder::new(rpc_url.to_string(), Some("data".to_string()));
+
+    // tb.get_sub_account_token_totals()?;
+
+    let data = get_asset_data(
+        &tb.client,
+        tb.vault_config.vault_id,
+        Pubkey::from_str("J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn")?,
+    )?;
+
+    // let (addy, data) = get_vault_state(&tb.client, tb.vault_config.vault_id)?;
+
+    println!("{data:?}");
+
+    Ok(())
 }

@@ -764,6 +764,7 @@ dependencies = [
  "eyre",
  "hex",
  "rayon",
+ "serde",
  "serde_json",
  "solana-account",
  "solana-address-lookup-table-interface",
@@ -2237,6 +2238,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab08d7cd2c5897f2c949e5383ea7c7db03fb19130ffcfbf7eda795137ae3cb83"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2918,6 +2928,7 @@ checksum = "17da310086b068fbdcefbba30aeb3721d5bb9af8db4987d6735b2183ca567229"
 dependencies = [
  "cfg-if",
  "indoc",
+ "inventory",
  "libc",
  "memoffset",
  "once_cell",
