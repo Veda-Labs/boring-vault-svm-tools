@@ -4,6 +4,8 @@ use solana_pubkey::Pubkey;
 use crate::{
     builder::Builder,
     manage_instructions::{ExternalInstruction, KaminoBorrow, KaminoDeposit},
+    state::{Obligation, Reserve},
+    utils::get_account_data_unsafe,
 };
 
 impl Builder {
@@ -57,5 +59,13 @@ impl Builder {
         );
 
         Ok(borrow.get_digest())
+    }
+
+    pub fn get_reserve(&self, reserve: &Pubkey) -> Result<Reserve> {
+        get_account_data_unsafe::<Reserve>(&self.client, reserve)
+    }
+
+    pub fn get_obligation(&self, obligation: &Pubkey) -> Result<Obligation> {
+        get_account_data_unsafe::<Obligation>(&self.client, obligation)
     }
 }

@@ -19,7 +19,7 @@ pub struct Reserve {
     pub padding: [u64; 207],
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[repr(C)]
 pub struct LastUpdate {
     pub slot: u64,
@@ -51,7 +51,7 @@ pub struct ReserveLiquidity {
     pub padding3: [u128; 32],
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, PartialEq)]
 #[repr(C)]
 pub struct BigFractionBytes {
     pub value: [u64; 4],
@@ -174,4 +174,70 @@ pub struct BorrowRateCurve {
     pub slope_2: u64,
     pub base_rate: u64,
     pub padding: [u64; 4],
+}
+
+#[derive(Debug, PartialEq)]
+#[repr(C)]
+pub struct Obligation {
+    pub tag: u64,
+    pub last_update: LastUpdate,
+    pub lending_market: Pubkey,
+    pub owner: Pubkey,
+    pub deposits: [ObligationCollateral; 8],
+    pub lowest_reserve_deposit_liquidation_ltv: u64,
+    pub deposited_value_sf: u128,
+
+    pub borrows: [ObligationLiquidity; 5],
+    pub borrow_factor_adjusted_debt_value_sf: u128,
+    pub borrowed_assets_market_value_sf: u128,
+    pub allowed_borrow_value_sf: u128,
+    pub unhealthy_borrow_value_sf: u128,
+
+    pub deposits_asset_tiers: [u8; 8],
+    pub borrows_asset_tiers: [u8; 5],
+
+    pub elevation_group: u8,
+
+    pub num_of_obsolete_reserves: u8,
+
+    pub has_debt: u8,
+
+    pub referrer: Pubkey,
+
+    pub borrowing_disabled: u8,
+
+    pub autodeleverage_target_ltv_pct: u8,
+
+    pub lowest_reserve_deposit_max_ltv_pct: u8,
+
+    pub reserved: [u8; 5],
+
+    pub highest_borrow_factor_pct: u64,
+
+    pub autodeleverage_margin_call_started_timestamp: u64,
+
+    pub padding_3: [u64; 125],
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+#[repr(C)]
+pub struct ObligationCollateral {
+    pub deposit_reserve: Pubkey,
+    pub deposited_amount: u64,
+    pub market_value_sf: u128,
+    pub borrowed_amount_against_this_collateral_in_elevation_group: u64,
+    pub padding: [u64; 9],
+}
+
+#[derive(Debug, Default, PartialEq)]
+#[repr(C)]
+pub struct ObligationLiquidity {
+    pub borrow_reserve: Pubkey,
+    pub cumulative_borrow_rate_bsf: BigFractionBytes,
+    pub padding: u64,
+    pub borrowed_amount_sf: u128,
+    pub market_value_sf: u128,
+    pub borrow_factor_adjusted_market_value_sf: u128,
+    pub borrowed_amount_outside_elevation_groups: u64,
+    pub padding2: [u64; 7],
 }
