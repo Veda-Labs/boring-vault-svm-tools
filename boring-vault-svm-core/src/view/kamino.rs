@@ -1,6 +1,8 @@
 use eyre::Result;
 use solana_pubkey::Pubkey;
+use crate::utils::bindings::kamino::accounts::Reserve;
 
+use crate::utils::get_account_data_unsafe;
 use crate::{
     builder::Builder,
     manage_instructions::{ExternalInstruction, KaminoBorrow, KaminoDeposit},
@@ -58,4 +60,10 @@ impl Builder {
 
         Ok(borrow.get_digest())
     }
+
+    pub fn get_reserve(&self, reserve: &Pubkey) -> Result<Reserve> {
+        let reserve = get_account_data_unsafe::<Reserve>(&self.client, reserve)?;
+
+        Ok(reserve)
+    }  
 }
