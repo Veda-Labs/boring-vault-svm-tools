@@ -3,6 +3,7 @@ pub mod builder;
 pub mod config;
 pub mod instructions;
 pub mod manage_instructions;
+pub mod state;
 pub mod transaction;
 pub mod utils;
 pub mod view;
